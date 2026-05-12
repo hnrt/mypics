@@ -69,6 +69,10 @@ public class ImageViewer extends JFrame {
         _listPane.loadDirectoryFrom(_configuration.getDirectory());
     }
 
+    public void close() {
+    	dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+    }
+
     public ListPane listPane() {
     	return _listPane;
     }

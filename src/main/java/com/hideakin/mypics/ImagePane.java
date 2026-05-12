@@ -103,6 +103,11 @@ public class ImagePane extends JScrollPane {
 		}
     }
 
+    public void redraw() {
+    	if (_imagePath == null) return;
+    	updateImage(computeImageSize(_configuration.getScalingMode()));
+    }
+
     public void rotateByOrientation(int orientation) {
     	if (_processedImage == null) return;
     	Record record = getRecord(_imagePath);

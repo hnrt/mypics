@@ -4,7 +4,6 @@ import static com.hideakin.mypics.Application.ABOUT;
 import static com.hideakin.mypics.Application.VERSION;
 
 import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 
 import javax.swing.JFileChooser;
@@ -37,15 +36,18 @@ public class MenuBar extends JMenuBar {
     private void buildFileMenu() {
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic(KeyEvent.VK_F);
-        JMenuItem openItem = new JMenuItem("Open...");
-        openItem.setMnemonic(KeyEvent.VK_O);
-        openItem.addActionListener(e -> openImage());
+        JMenuItem openDirectoryItem = new JMenuItem("Open directory...");
+        openDirectoryItem.setMnemonic(KeyEvent.VK_D);
+        openDirectoryItem.addActionListener(e -> openDirectory());
+        JMenuItem openFileItem = new JMenuItem("Open file...");
+        openFileItem.setMnemonic(KeyEvent.VK_F);
+        openFileItem.addActionListener(e -> openFile());
         JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.setMnemonic(KeyEvent.VK_X);
-        exitItem.addActionListener(e -> {
-        	_viewer.dispatchEvent(new WindowEvent(_viewer, WindowEvent.WINDOW_CLOSING));
-        });
-        fileMenu.add(openItem);
+        exitItem.addActionListener(e -> _viewer.close());
+        fileMenu.add(openDirectoryItem);
+        fileMenu.add(openFileItem);
+        fileMenu.addSeparator();
         fileMenu.add(exitItem);
         add(fileMenu);
     }
@@ -73,7 +75,7 @@ public class MenuBar extends JMenuBar {
     private void buildOptionsMenu() {
         JMenu optionsMenu = new JMenu("Options");
         optionsMenu.setMnemonic(KeyEvent.VK_O);
-        JMenuItem moveDestItem = new JMenuItem("Move Destination...");
+        JMenuItem moveDestItem = new JMenuItem("Move destination...");
         moveDestItem.setMnemonic(KeyEvent.VK_D);
         moveDestItem.addActionListener(e -> MoveDestinationDialog.of(_viewer).showDialog());
         optionsMenu.add(moveDestItem);
@@ -94,17 +96,28 @@ public class MenuBar extends JMenuBar {
         add(helpMenu);
     }
 
-    private void openImage() {
+    private void openDirectory() {
         JFileChooser chooser = new JFileChooser();
-        Path dir = _configuration.getDirectory();
-        if (dir != null) {
-        	chooser.setCurrentDirectory(dir.toFile());
+        chooser.setDialogTitle("Open directory...");
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setSelectedFile(_configuration.getDirectory().toFile());
+        int result = chooser.showOpenDialog(_viewer);
+        if (result == JFileChooser.APPROVE_OPTION) {
+        	_configuration.setDirectory(chooser.getSelectedFile().toPath());
+        	_viewer.listPane().loadDirectoryFrom(_configuration.getDirectory());
         }
-        int result = chooser.showOpenDialog(this);
+    }
+
+    private void openFile() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Open image file...");
+       	chooser.setCurrentDirectory(_configuration.getDirectory().toFile());
+        int result = chooser.showOpenDialog(_viewer);
         if (result == JFileChooser.APPROVE_OPTION) {
         	Path path = chooser.getSelectedFile().toPath();
             _configuration.setDirectory(path.getParent());
-            _viewer.listPane().loadDirectoryFrom(path);
+            _viewer.listPane().loadDirectoryFrom(_configuration.getDirectory());
             _viewer.listPane().select(path);
         }
     }

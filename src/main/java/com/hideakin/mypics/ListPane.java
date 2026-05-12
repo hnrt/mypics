@@ -14,9 +14,9 @@ public class ListPane extends JSplitPane {
 		return new ListPane();
 	}
 
-	private final DirectoryListModel _directoryModel = DirectoryListModel.create(FileListModel.create());
-	private final DirectoryList _directoryList = DirectoryList.of(_directoryModel);
-	private final FileList _fileList = FileList.of(_directoryModel.fileListModel());
+	private final DirectoryListModel _directoryListModel = DirectoryListModel.create(FileListModel.create());
+	private final DirectoryList _directoryList = DirectoryList.of(_directoryListModel);
+	private final FileList _fileList = FileList.of(_directoryListModel.fileListModel());
 	private Consumer<Path> _onSelected = path -> {};
 
 	private ListPane() {
@@ -33,7 +33,7 @@ public class ListPane extends JSplitPane {
 	}
 
 	public void onChanged(Consumer<Path> callback) {
-		_directoryModel.onChanged(callback);
+		_directoryListModel.onChanged(callback);
 	}
 
 	public void onSelected(Consumer<Path> callback) {
@@ -41,7 +41,7 @@ public class ListPane extends JSplitPane {
 	}
 
 	public void loadDirectoryFrom(Path path) {
-		_directoryModel.loadFrom(path);
+		_directoryListModel.loadFrom(path);
 	}
 
 	public void select(Path path) {

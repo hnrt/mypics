@@ -1,7 +1,6 @@
 package com.hideakin.mypics;
 
 import java.awt.BorderLayout;
-import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 
@@ -15,11 +14,12 @@ public class PreferencesDialog extends JDialog {
 
 	private static final long serialVersionUID = -3682327462543253658L;
 
-	public static PreferencesDialog of(Frame owner) {
-		return new PreferencesDialog(owner);
+	public static PreferencesDialog of(ImageViewer viewer) {
+		return new PreferencesDialog(viewer);
 	}
 
 	private final Configuration _configuration = Configuration.getInstance();
+	private final ImageViewer _viewer;
 	private boolean result = false;
 	private JRadioButton _rb1;
 	private JRadioButton _rb2;
@@ -28,8 +28,9 @@ public class PreferencesDialog extends JDialog {
 	private JRadioButton _rb5;
 	private JRadioButton _rb6;
 
-	private PreferencesDialog(Frame owner) {
-		super(owner, "Preferences", true);
+	private PreferencesDialog(ImageViewer viewer) {
+		super(viewer, "Preferences", true);
+		_viewer = viewer;
 		JButton applyButton = new JButton("Apply");
 		applyButton.addActionListener(e -> {
 			result = true;
@@ -81,7 +82,7 @@ public class PreferencesDialog extends JDialog {
         add(radioPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
         pack();
-        setLocationRelativeTo(owner);
+        setLocationRelativeTo(_viewer);
 	}
 
 	public void showDialog() {
@@ -103,6 +104,7 @@ public class PreferencesDialog extends JDialog {
 					_configuration.setScale(1.0);
 				}
 			}
+			_viewer.imagePane().redraw();
 		}
 	}
 
