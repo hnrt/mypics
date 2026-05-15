@@ -21,7 +21,10 @@ public class ImageViewer extends JFrame {
                 _listPane,
                 _imagePane
         );
-        splitPane.setDividerLocation(250);
+        splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
+        splitPane.addPropertyChangeListener("dividerLocation", e -> {
+        	_configuration.setHorizontalDividerLocation((int)e.getNewValue());
+        });
         add(splitPane, BorderLayout.CENTER);
 
         setJMenuBar(MenuBar.of(this));

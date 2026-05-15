@@ -14,6 +14,7 @@ public class ListPane extends JSplitPane {
 		return new ListPane();
 	}
 
+	private final Configuration _configuration = Configuration.getInstance();
 	private final DirectoryListModel _directoryListModel = DirectoryListModel.create(FileListModel.create());
 	private final DirectoryList _directoryList = DirectoryList.of(_directoryListModel);
 	private final FileList _fileList = FileList.of(_directoryListModel.fileListModel());
@@ -23,7 +24,10 @@ public class ListPane extends JSplitPane {
 		super(JSplitPane.VERTICAL_SPLIT);
 		setTopComponent(new JScrollPane(_directoryList));
 		setBottomComponent(new JScrollPane(_fileList));
-		setDividerLocation(200);
+		setDividerLocation(_configuration.getListVerticalDividerLocation());
+		addPropertyChangeListener("dividerLocation", e -> {
+        	_configuration.setListVerticalDividerLocation((int)e.getNewValue());
+        });
 		_fileList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
             	Path selected = _fileList.getSelectedValue();

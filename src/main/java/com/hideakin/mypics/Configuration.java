@@ -16,6 +16,8 @@ public class Configuration {
 
 	public static final int DEFAULT_WIDTH = 800;
 	public static final int DEFAULT_HEIGHT = 600;
+	public static final int DEFAULT_HORIZONTAL_DIVIDER_LOCATION = 250;
+	public static final int DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION = 200;
 
 	public static final int NUMBER_OF_RECENT_DIRECTORIES = 10;
 	public static final int NUMBER_OF_DESTINATIONS = 10;
@@ -75,6 +77,12 @@ public class Configuration {
 
 	@JsonProperty("moveFileInterval")
 	private long _moveFileInterval = 300L;
+
+	@JsonProperty("horizontalDividerLocation")
+	private int _horizontalDividerLocation = DEFAULT_HORIZONTAL_DIVIDER_LOCATION;
+
+	@JsonProperty("listVerticalDividerLocation")
+	private int _listVerticalDividerLocation = DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION;
 
 	@JsonIgnore
 	private Path _path;
@@ -221,6 +229,22 @@ public class Configuration {
 
 	public long getMoveFileInterval() {
 		return _moveFileInterval;
+	}
+
+	public int getHorizontalDividerLocation() {
+		return _horizontalDividerLocation;
+	}
+
+	public void setHorizontalDividerLocation(int value) {
+		_horizontalDividerLocation = value;
+	}
+
+	public int getListVerticalDividerLocation() {
+		return _listVerticalDividerLocation;
+	}
+
+	public void setListVerticalDividerLocation(int value) {
+		_listVerticalDividerLocation = value;
 	}
 
 }
