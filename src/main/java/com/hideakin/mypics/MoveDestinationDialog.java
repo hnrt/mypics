@@ -7,9 +7,13 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 import static com.hideakin.mypics.Configuration.NUMBER_OF_DESTINATIONS;
 
-public class MoveDestinationDialog extends JDialog {
+public class MoveDestinationDialog extends ModalDialogBox {
 
 	private static final long serialVersionUID = -1768514000467514333L;
+
+	public static MoveDestinationDialog of(ImageViewer viewer) {
+		return new MoveDestinationDialog(viewer);
+	}
 
 	private static final String ENTER_PRESSED = "enterPressed";
 
@@ -63,33 +67,14 @@ public class MoveDestinationDialog extends JDialog {
 
 	}
 
-	public static MoveDestinationDialog of(Frame owner) {
-		return new MoveDestinationDialog(owner);
-	}
-
 	private final Configuration _configuration = Configuration.getInstance();
 	private final DefaultListModel<Item> _model = new DefaultListModel<>();
-	private boolean result = false;
 
-	private MoveDestinationDialog(Frame owner) {
-		super(owner, "Move Destinations (click to change)", true);
+	private MoveDestinationDialog(ImageViewer viewer) {
+		super(viewer, "Move Destinations (click to change)");
         for (int i = 0; i < NUMBER_OF_DESTINATIONS; i++) {
         	_model.addElement(new Item(String.format("CTRL+%d", i), _configuration.getDestination(i)));
         }
-		JButton applyButton = new JButton("Apply");
-		applyButton.addActionListener(e -> {
-			result = true;
-			dispose();
-		});
-		applyButton.setMnemonic(KeyEvent.VK_A);
-		JButton cancelButton = new JButton("Cancel");
-		cancelButton.addActionListener(e -> {
-			dispose();
-		});
-		cancelButton.setMnemonic(KeyEvent.VK_C);
-		JPanel buttonPanel = new JPanel();
-        buttonPanel.add(applyButton);
-        buttonPanel.add(cancelButton);
 		JList<Item> list = new JList<>(_model);
 		list.setCellRenderer(new ItemRenderer());
         list.addMouseListener(new ButtonClickListener(list, index -> change(index)));
@@ -103,10 +88,7 @@ public class MoveDestinationDialog extends JDialog {
         });
         getContentPane().setLayout(new BorderLayout());
         add(new JScrollPane(list), BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-        pack();
         setSize(400, 200);
-        setLocationRelativeTo(owner);
 	}
 
 	private void change(int index) {
@@ -127,14 +109,13 @@ public class MoveDestinationDialog extends JDialog {
         }
 	}
 
-	public void showDialog() {
-		setVisible(true);
-		if (result) {
-			for (int i = 0; i < NUMBER_OF_DESTINATIONS; i++) {
-				Item item = _model.get(i);
-				_configuration.setDestination(i, item.value);
-			}
+	@Override
+	public void apply() {
+		for (int i = 0; i < NUMBER_OF_DESTINATIONS; i++) {
+			Item item = _model.get(i);
+			_configuration.setDestination(i, item.value);
 		}
+		super.apply();
 	}
 
 }
