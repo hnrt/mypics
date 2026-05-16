@@ -52,4 +52,17 @@ public class ListPane extends JSplitPane {
 		_fileList.setSelectedValue(path, true);
 	}
 
+	public void moveSelectedFileTo(Path path) {
+		_fileList.moveTo(path);
+	}
+
+	public void undo() {
+		_fileList.undo();
+	}
+
+	public void setDefaultSize() {
+		_configuration.setListVerticalDividerLocation(Configuration.DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION);
+		setDividerLocation(_configuration.getListVerticalDividerLocation());
+	}
+
 }

@@ -58,6 +58,7 @@ public class ModalDialogBox extends JDialog {
 	}
 
 	public void apply() {
+		_viewer.menuBar().update();
 		_viewer.imagePane().redraw();
 	}
 

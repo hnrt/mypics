@@ -14,6 +14,7 @@ public class ImageViewer extends JFrame {
 	private final MenuBar _menuBar;
 	private final ListPane _listPane;
 	private final ImagePane _imagePane;
+	private final JSplitPane _splitPane;
 
 	public ImageViewer() {
 		super("Image Viewer");
@@ -22,16 +23,16 @@ public class ImageViewer extends JFrame {
 		_listPane = ListPane.create();
 		_imagePane = ImagePane.create();
 
-		JSplitPane splitPane = new JSplitPane(
+		_splitPane = new JSplitPane(
 				JSplitPane.HORIZONTAL_SPLIT,
 				_listPane,
 				_imagePane
 		);
-		splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
-		splitPane.addPropertyChangeListener("dividerLocation", e -> {
+		_splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
+		_splitPane.addPropertyChangeListener("dividerLocation", e -> {
 			_configuration.setHorizontalDividerLocation((int)e.getNewValue());
 		});
-		add(splitPane, BorderLayout.CENTER);
+		add(_splitPane, BorderLayout.CENTER);
 
 		setJMenuBar(_menuBar);
 
@@ -59,7 +60,7 @@ public class ImageViewer extends JFrame {
 
 		_listPane.onChanged(path -> {
 			setTitle(String.format("%s", path));
-			_menuBar.updateChangeDirectoryMenus();
+			_menuBar.update();
 		});
 		_listPane.onSelected(path -> {
 			_imagePane.loadFrom(path);
@@ -83,6 +84,10 @@ public class ImageViewer extends JFrame {
 		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}
 
+	public MenuBar menuBar() {
+		return _menuBar;
+	}
+
 	public ListPane listPane() {
 		return _listPane;
 	}
@@ -100,6 +105,23 @@ public class ImageViewer extends JFrame {
 		_configuration.setDirectory(path.getParent());
 		_listPane.loadDirectoryFrom(_configuration.getDirectory());
 		_listPane.select(path);
+	}
+
+	public void moveFileTo(Path path) {
+		_listPane.moveSelectedFileTo(path);
+	}
+
+	public void undo() {
+		_listPane.undo();
+	}
+
+	public void setDefaultSize() {
+		_listPane.setDefaultSize();
+		_configuration.setWidth(Configuration.DEFAULT_WIDTH);
+		_configuration.setHeight(Configuration.DEFAULT_HEIGHT);
+		_configuration.setHorizontalDividerLocation(Configuration.DEFAULT_HORIZONTAL_DIVIDER_LOCATION);
+		setSize(_configuration.getWidth(), _configuration.getHeight());
+		_splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
 	}
 
 }

@@ -43,81 +43,61 @@ public class FileList extends JList<Path> {
         am.put("ctrl0", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 0, list.getSelectedIndex());
-            	}
+            	moveTo(0);
             }
         });
         am.put("ctrl1", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 1, list.getSelectedIndex());
-            	}
+            	moveTo(1);
             }
         });
         am.put("ctrl2", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 2, list.getSelectedIndex());
-            	}
+            	moveTo(2);
             }
         });
         am.put("ctrl3", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 3, list.getSelectedIndex());
-            	}
+            	moveTo(3);
             }
         });
         am.put("ctrl4", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 4, list.getSelectedIndex());
-            	}
+            	moveTo(4);
             }
         });
         am.put("ctrl5", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 5, list.getSelectedIndex());
-            	}
+            	moveTo(5);
             }
         });
         am.put("ctrl6", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 6, list.getSelectedIndex());
-            	}
+            	moveTo(6);
             }
         });
         am.put("ctrl7", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 7, list.getSelectedIndex());
-            	}
+            	moveTo(7);
             }
         });
         am.put("ctrl8", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 8, list.getSelectedIndex());
-            	}
+            	moveTo(8);
             }
         });
         am.put("ctrl9", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	if (e.getSource() instanceof FileList list) {
-            		move(list.getSelectedValue(), 9, list.getSelectedIndex());
-            	}
+            	moveTo(9);
             }
         });
         am.put("undo", new AbstractAction() {
@@ -128,15 +108,23 @@ public class FileList extends JList<Path> {
         });
 	}
 
-	private void move(Path selected, int destinationIndex, int selectedIndex) {
-		try {
-			clearSelection();
-			_model.move(selected, _configuration.getDestination(destinationIndex), selectedIndex);
-			if (0 <= selectedIndex && selectedIndex < _model.getSize()) {
-				setSelectedIndex(selectedIndex);
+	private void moveTo(int index) {
+		moveTo(_configuration.getDestination(index));
+	}
+
+	public void moveTo(Path directory) {
+		Path selected = getSelectedValue();
+		if (selected != null) {
+			int selectedIndex = getSelectedIndex();
+			try {
+				clearSelection();
+				_model.move(selected, directory, selectedIndex);
+				if (0 <= selectedIndex && selectedIndex < _model.getSize()) {
+					setSelectedIndex(selectedIndex);
+				}
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
 			}
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

@@ -29,7 +29,7 @@ public class MenuBar extends JMenuBar {
 		private final ImageViewer _viewer;
 
 		public OpenDirectoryMenu(String text, ImageViewer viewer) {
-			super("Open directory");
+			super(text);
 			_viewer = viewer;
 			build();
 		}
@@ -115,6 +115,90 @@ public class MenuBar extends JMenuBar {
 
 	}
 
+	private static class MoveFileMenu extends JMenu {
+
+		private static final long serialVersionUID = 6868167166919666541L;
+
+		private final Configuration _configuration = Configuration.getInstance();
+		private final ImageViewer _viewer;
+
+		public MoveFileMenu(String text, ImageViewer viewer) {
+			super(text);
+			_viewer = viewer;
+			build();
+		}
+
+		private void build() {
+			removeAll();
+			Path[] directories = _configuration.getDestinations();
+			if (directories[0] != null) {
+				JMenuItem item = new JMenuItem("0 " + directories[0].toString());
+				item.setMnemonic(KeyEvent.VK_0);
+				item.addActionListener(e-> moveTo(0));
+				add(item);
+			}
+			if (directories[1] != null) {
+				JMenuItem item = new JMenuItem("1 " + directories[1].toString());
+				item.setMnemonic(KeyEvent.VK_1);
+				item.addActionListener(e-> moveTo(1));
+				add(item);
+			}
+			if (directories[2] != null) {
+				JMenuItem item = new JMenuItem("2 " + directories[2].toString());
+				item.setMnemonic(KeyEvent.VK_2);
+				item.addActionListener(e-> moveTo(2));
+				add(item);
+			}
+			if (directories[3] != null) {
+				JMenuItem item = new JMenuItem("3 " + directories[3].toString());
+				item.setMnemonic(KeyEvent.VK_3);
+				item.addActionListener(e-> moveTo(3));
+				add(item);
+			}
+			if (directories[4] != null) {
+				JMenuItem item = new JMenuItem("4 " + directories[4].toString());
+				item.setMnemonic(KeyEvent.VK_4);
+				item.addActionListener(e-> moveTo(4));
+				add(item);
+			}
+			if (directories[5] != null) {
+				JMenuItem item = new JMenuItem("5 " + directories[5].toString());
+				item.setMnemonic(KeyEvent.VK_5);
+				item.addActionListener(e-> moveTo(5));
+				add(item);
+			}
+			if (directories[6] != null) {
+				JMenuItem item = new JMenuItem("6 " + directories[6].toString());
+				item.setMnemonic(KeyEvent.VK_6);
+				item.addActionListener(e-> moveTo(6));
+				add(item);
+			}
+			if (directories[7] != null) {
+				JMenuItem item = new JMenuItem("7 " + directories[7].toString());
+				item.setMnemonic(KeyEvent.VK_7);
+				item.addActionListener(e-> moveTo(7));
+				add(item);
+			}
+			if (directories[8] != null) {
+				JMenuItem item = new JMenuItem("8 " + directories[8].toString());
+				item.setMnemonic(KeyEvent.VK_8);
+				item.addActionListener(e-> moveTo(8));
+				add(item);
+			}
+			if (directories[9] != null) {
+				JMenuItem item = new JMenuItem("9 " + directories[9].toString());
+				item.setMnemonic(KeyEvent.VK_9);
+				item.addActionListener(e-> moveTo(9));
+				add(item);
+			}
+		}
+
+		private void moveTo(int index) {
+			_viewer.moveFileTo(_configuration.getDestination(index));
+		}
+
+	}
+
 	private final Configuration _configuration = Configuration.getInstance();
 	private final ImageViewer _viewer;
 
@@ -149,6 +233,14 @@ public class MenuBar extends JMenuBar {
 	private void buildEditMenu() {
 		JMenu editMenu = new JMenu("Edit");
 		editMenu.setMnemonic(KeyEvent.VK_E);
+		JMenu moveFileMenu = new MoveFileMenu("Move file", _viewer);
+		moveFileMenu.setMnemonic(KeyEvent.VK_M);
+		JMenuItem undoItem = new JMenuItem("Undo");
+		undoItem.setMnemonic(KeyEvent.VK_U);
+		undoItem.addActionListener(e-> _viewer.undo());
+		editMenu.add(moveFileMenu);
+		editMenu.addSeparator();
+		editMenu.add(undoItem);
 		add(editMenu);
 	}
 
@@ -176,6 +268,11 @@ public class MenuBar extends JMenuBar {
 		JMenuItem preferencesItem = new JMenuItem("Preferences...");
 		preferencesItem.addActionListener(e -> PreferencesDialog.of(_viewer).showDialog());
 		optionsMenu.add(preferencesItem);
+		optionsMenu.addSeparator();
+		JMenuItem defaultSizeItem = new JMenuItem("Default size");
+		defaultSizeItem.setMnemonic(KeyEvent.VK_D);
+		defaultSizeItem.addActionListener(e -> _viewer.setDefaultSize());
+		optionsMenu.add(defaultSizeItem);
 		add(optionsMenu);
 	}
 
@@ -200,12 +297,21 @@ public class MenuBar extends JMenuBar {
 		}
 	}
 
-	public void updateChangeDirectoryMenus() {
+	public void update() {
 		JMenu fileMenu = getMenu(0);
 		int n = fileMenu.getMenuComponentCount();
 		for (int i = 0; i < n; i++) {
 			Component c = fileMenu.getMenuComponent(i);
 			if (c instanceof OpenDirectoryMenu menu) {
+				menu.build();
+				break;
+			}
+		}
+		JMenu editMenu = getMenu(1);
+		n = editMenu.getMenuComponentCount();
+		for (int i = 0; i < n; i++) {
+			Component c = editMenu.getMenuComponent(i);
+			if (c instanceof MoveFileMenu menu) {
 				menu.build();
 				break;
 			}
