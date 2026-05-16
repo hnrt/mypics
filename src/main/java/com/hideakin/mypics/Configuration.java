@@ -87,6 +87,9 @@ public class Configuration {
 	@JsonIgnore
 	private Path _path;
 
+	@JsonIgnore
+	private Locker _locker;
+
 	private Configuration() {
 	}
 
@@ -96,9 +99,14 @@ public class Configuration {
 
 	private void setPath(Path value) {
 		_path = value;
+		_locker = Locker.of(_path);
+		_locker.hold();
 	}
 
 	public void save() {
+		if (!_locker.haveLocked()) {
+			return;
+		}
 		try {
 			ObjectMapper mapper = new ObjectMapper()
 			        .registerModule(new Jdk8Module())
@@ -123,6 +131,7 @@ public class Configuration {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		_locker.release();
 	}
 
 	public int getWidth() {
