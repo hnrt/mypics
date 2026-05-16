@@ -3,6 +3,7 @@ package com.hideakin.mypics;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.nio.file.Path;
 
 public class ImageViewer extends JFrame {
 
@@ -10,78 +11,95 @@ public class ImageViewer extends JFrame {
 
 	private final Configuration _configuration = Configuration.getInstance();
 
-	private final ListPane _listPane = ListPane.create();
-	private final ImagePane _imagePane = ImagePane.create();
+	private final MenuBar _menuBar;
+	private final ListPane _listPane;
+	private final ImagePane _imagePane;
 
-    public ImageViewer() {
-        super("Image Viewer");
+	public ImageViewer() {
+		super("Image Viewer");
 
-        JSplitPane splitPane = new JSplitPane(
-                JSplitPane.HORIZONTAL_SPLIT,
-                _listPane,
-                _imagePane
-        );
-        splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
-        splitPane.addPropertyChangeListener("dividerLocation", e -> {
-        	_configuration.setHorizontalDividerLocation((int)e.getNewValue());
-        });
-        add(splitPane, BorderLayout.CENTER);
+		_menuBar = MenuBar.of(this);
+		_listPane = ListPane.create();
+		_imagePane = ImagePane.create();
 
-        setJMenuBar(MenuBar.of(this));
+		JSplitPane splitPane = new JSplitPane(
+				JSplitPane.HORIZONTAL_SPLIT,
+				_listPane,
+				_imagePane
+		);
+		splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
+		splitPane.addPropertyChangeListener("dividerLocation", e -> {
+			_configuration.setHorizontalDividerLocation((int)e.getNewValue());
+		});
+		add(splitPane, BorderLayout.CENTER);
 
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		setJMenuBar(_menuBar);
 
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-            	_configuration.save();
-                System.exit(0);
-            }
-        });
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-            	int state = ImageViewer.this.getExtendedState();
-            	if ((state & (Frame.MAXIMIZED_BOTH | Frame.ICONIFIED)) == 0) {
-            		int w = ImageViewer.this.getWidth();
-            		int h = ImageViewer.this.getHeight();
-            		_configuration.setWindowSize(w, h);
-            	}
-            }
-        });
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				_configuration.save();
+				System.exit(0);
+			}
+		});
 
-        _listPane.onChanged(path -> {
-            setTitle(String.format("%s", path));
-        });
-        _listPane.onSelected(path -> {
-        	_imagePane.loadFrom(path);
-        });
+		addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				int state = ImageViewer.this.getExtendedState();
+				if ((state & (Frame.MAXIMIZED_BOTH | Frame.ICONIFIED)) == 0) {
+					int w = ImageViewer.this.getWidth();
+					int h = ImageViewer.this.getHeight();
+					_configuration.setWindowSize(w, h);
+				}
+			}
+		});
 
-        _imagePane.onChanged(pane -> {
-        	if (pane.path() == null) {
-        		setTitle(String.format("%s", _configuration.getDirectory()));
-        	} else {
-        		setTitle(String.format("%s [%d%%]", pane.path(), (int)(pane.scale() * 100)));
-        	}
-        });
+		_listPane.onChanged(path -> {
+			setTitle(String.format("%s", path));
+			_menuBar.updateChangeDirectoryMenus();
+		});
+		_listPane.onSelected(path -> {
+			_imagePane.loadFrom(path);
+		});
 
-        setSize(_configuration.getWidth(), _configuration.getHeight());
-        setLocationRelativeTo(null);
+		_imagePane.onChanged(pane -> {
+			if (pane.path() == null) {
+				setTitle(String.format("%s", _configuration.getDirectory()));
+			} else {
+				setTitle(String.format("%s [%d%%]", pane.path(), (int)(pane.scale() * 100)));
+			}
+		});
 
-        _listPane.loadDirectoryFrom(_configuration.getDirectory());
-    }
+		setSize(_configuration.getWidth(), _configuration.getHeight());
+		setLocationRelativeTo(null);
 
-    public void close() {
-    	dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-    }
+		_listPane.loadDirectoryFrom(_configuration.getDirectory());
+	}
 
-    public ListPane listPane() {
-    	return _listPane;
-    }
+	public void close() {
+		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+	}
 
-    public ImagePane imagePane() {
-    	return _imagePane;
-    }
+	public ListPane listPane() {
+		return _listPane;
+	}
+
+	public ImagePane imagePane() {
+		return _imagePane;
+	}
+
+	public void loadDirectoryFrom(Path path) {
+		_configuration.setDirectory(path);
+		_listPane.loadDirectoryFrom(_configuration.getDirectory());
+	}
+
+	public void loadImageFrom(Path path) {
+		_configuration.setDirectory(path.getParent());
+		_listPane.loadDirectoryFrom(_configuration.getDirectory());
+		_listPane.select(path);
+	}
 
 }

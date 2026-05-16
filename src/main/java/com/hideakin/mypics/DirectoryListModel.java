@@ -3,6 +3,8 @@ package com.hideakin.mypics;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.DefaultListModel;
@@ -17,7 +19,7 @@ public class DirectoryListModel extends DefaultListModel<Path> {
 
 	private final Configuration _configuration = Configuration.getInstance();
 	private final FileListModel _fileListModel;
-	private Consumer<Path> _onChanged = path -> {};
+	private final List<Consumer<Path>> _onChanged = new ArrayList<>();
 
 	private DirectoryListModel(FileListModel fileListModel) {
 		super();
@@ -25,7 +27,7 @@ public class DirectoryListModel extends DefaultListModel<Path> {
 	}
 
 	public void onChanged(Consumer<Path> callback) {
-		_onChanged = callback;
+		_onChanged.add(callback);
 	}
 
 	public FileListModel fileListModel() {
@@ -34,19 +36,19 @@ public class DirectoryListModel extends DefaultListModel<Path> {
 
 	public void loadFrom(Path directory) {
 		_configuration.setDirectory(directory);
-        _fileListModel.clear();
-    	clear();
-        if (directory.getParent() == null) {
-        	for (char c = 'A'; c <= 'Z'; c++) {
-        		Path path = Paths.get(String.format("%c:\\", c));
-        		if (Files.exists(path) && !path.equals(directory)) {
-                	addElement(path);
-        		}
-        	}
-        } else {
-        	addElement(Paths.get(".."));
-        }
-        try {
+		_fileListModel.clear();
+		clear();
+		if (directory.getParent() == null) {
+			for (char c = 'A'; c <= 'Z'; c++) {
+				Path path = Paths.get(String.format("%c:\\", c));
+				if (Files.exists(path) && !path.equals(directory)) {
+					addElement(path);
+				}
+			}
+		} else {
+			addElement(Paths.get(".."));
+		}
+		try {
 			Files.list(directory).sorted().forEach((e) -> {
 				if (Files.isDirectory(e)) {
 					addElement(e);
@@ -57,7 +59,9 @@ public class DirectoryListModel extends DefaultListModel<Path> {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-        _onChanged.accept(directory);
-    }
+		for (Consumer<Path> cb : _onChanged) {
+			cb.accept(directory);
+		}
+	}
 
 }
