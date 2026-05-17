@@ -42,6 +42,7 @@ public class ImageViewer extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				_configuration.save();
+				UndoManager.getInstance().clear();
 				System.exit(0);
 			}
 		});
