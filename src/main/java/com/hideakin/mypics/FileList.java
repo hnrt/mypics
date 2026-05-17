@@ -142,7 +142,23 @@ public class FileList extends JList<Path> {
 			int selectedIndex = getSelectedIndex();
 			try {
 				clearSelection();
-				_model.move(selected, destination, selectedIndex);
+				_model.move(selected, destination);
+				if (0 <= selectedIndex && selectedIndex < _model.getSize()) {
+					setSelectedIndex(selectedIndex);
+				}
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+
+	public void remove() {
+		Path selected = getSelectedValue();
+		if (selected != null) {
+			int selectedIndex = getSelectedIndex();
+			try {
+				clearSelection();
+				_model.remove(selected);
 				if (0 <= selectedIndex && selectedIndex < _model.getSize()) {
 					setSelectedIndex(selectedIndex);
 				}
@@ -153,10 +169,15 @@ public class FileList extends JList<Path> {
 	}
 
 	public void undo() {
+		Path selected = getSelectedValue();
 		try {
+			clearSelection();
 			_model.undo();
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+		}
+		if (selected != null) {
+			setSelectedValue(selected, true);
 		}
 	}
 

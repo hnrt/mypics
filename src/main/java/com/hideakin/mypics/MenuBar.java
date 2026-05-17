@@ -241,6 +241,10 @@ public class MenuBar extends JMenuBar {
 		JMenu moveFileMenu = new MoveFileMenu("Move file", _viewer);
 		moveFileMenu.setMnemonic(KeyEvent.VK_M);
 		editMenu.add(moveFileMenu);
+		JMenuItem deleteItem = new JMenuItem("Delete file");
+		deleteItem.setMnemonic(KeyEvent.VK_D);
+		deleteItem.addActionListener(e -> _viewer.listPane().fileList().remove());
+		editMenu.add(deleteItem);
 		editMenu.addSeparator();
 		JMenuItem undoItem = new JMenuItem("Undo");
 		undoItem.setMnemonic(KeyEvent.VK_U);
