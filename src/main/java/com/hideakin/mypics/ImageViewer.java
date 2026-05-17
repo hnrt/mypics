@@ -58,11 +58,11 @@ public class ImageViewer extends JFrame {
 			}
 		});
 
-		_listPane.onChanged(path -> {
+		_listPane.directoryListModel().onChanged(path -> {
 			setTitle(String.format("%s", path));
 			_menuBar.update();
 		});
-		_listPane.onSelected(path -> {
+		_listPane.fileList().onSelected(path -> {
 			_imagePane.loadFrom(path);
 		});
 
@@ -77,7 +77,7 @@ public class ImageViewer extends JFrame {
 		setSize(_configuration.getWidth(), _configuration.getHeight());
 		setLocationRelativeTo(null);
 
-		_listPane.loadDirectoryFrom(_configuration.getDirectory());
+		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
 	}
 
 	public void close() {
@@ -98,21 +98,13 @@ public class ImageViewer extends JFrame {
 
 	public void loadDirectoryFrom(Path path) {
 		_configuration.setDirectory(path);
-		_listPane.loadDirectoryFrom(_configuration.getDirectory());
+		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
 	}
 
 	public void loadImageFrom(Path path) {
 		_configuration.setDirectory(path.getParent());
-		_listPane.loadDirectoryFrom(_configuration.getDirectory());
-		_listPane.select(path);
-	}
-
-	public void moveFileTo(Path path) {
-		_listPane.moveSelectedFileTo(path);
-	}
-
-	public void undo() {
-		_listPane.undo();
+		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
+		_listPane.fileList().select(path);
 	}
 
 	public void setDefaultSize() {

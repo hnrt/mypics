@@ -194,7 +194,7 @@ public class MenuBar extends JMenuBar {
 		}
 
 		private void moveTo(int index) {
-			_viewer.moveFileTo(_configuration.getDestination(index));
+			_viewer.listPane().fileList().moveTo(_configuration.getDestination(index));
 		}
 
 	}
@@ -233,13 +233,18 @@ public class MenuBar extends JMenuBar {
 	private void buildEditMenu() {
 		JMenu editMenu = new JMenu("Edit");
 		editMenu.setMnemonic(KeyEvent.VK_E);
+		JMenuItem copyPathItem = new JMenuItem("Copy path");
+		copyPathItem.setMnemonic(KeyEvent.VK_C);
+		copyPathItem.addActionListener(e -> _viewer.listPane().fileList().copyPath());
+		editMenu.add(copyPathItem);
+		editMenu.addSeparator();
 		JMenu moveFileMenu = new MoveFileMenu("Move file", _viewer);
 		moveFileMenu.setMnemonic(KeyEvent.VK_M);
-		JMenuItem undoItem = new JMenuItem("Undo");
-		undoItem.setMnemonic(KeyEvent.VK_U);
-		undoItem.addActionListener(e-> _viewer.undo());
 		editMenu.add(moveFileMenu);
 		editMenu.addSeparator();
+		JMenuItem undoItem = new JMenuItem("Undo");
+		undoItem.setMnemonic(KeyEvent.VK_U);
+		undoItem.addActionListener(e-> _viewer.listPane().fileList().undo());
 		editMenu.add(undoItem);
 		add(editMenu);
 	}

@@ -1,8 +1,5 @@
 package com.hideakin.mypics;
 
-import java.nio.file.Path;
-import java.util.function.Consumer;
-
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
@@ -18,7 +15,6 @@ public class ListPane extends JSplitPane {
 	private final DirectoryListModel _directoryListModel = DirectoryListModel.create(FileListModel.create());
 	private final DirectoryList _directoryList = DirectoryList.of(_directoryListModel);
 	private final FileList _fileList = FileList.of(_directoryListModel.fileListModel());
-	private Consumer<Path> _onSelected = path -> {};
 
 	private ListPane() {
 		super(JSplitPane.VERTICAL_SPLIT);
@@ -28,36 +24,14 @@ public class ListPane extends JSplitPane {
 		addPropertyChangeListener("dividerLocation", e -> {
         	_configuration.setListVerticalDividerLocation((int)e.getNewValue());
         });
-		_fileList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-            	Path selected = _fileList.getSelectedValue();
-            	_onSelected.accept(selected);
-            }
-        });
 	}
 
-	public void onChanged(Consumer<Path> callback) {
-		_directoryListModel.onChanged(callback);
+	public DirectoryListModel directoryListModel() {
+		return _directoryListModel;
 	}
 
-	public void onSelected(Consumer<Path> callback) {
-		_onSelected = callback;
-	}
-
-	public void loadDirectoryFrom(Path path) {
-		_directoryListModel.loadFrom(path);
-	}
-
-	public void select(Path path) {
-		_fileList.setSelectedValue(path, true);
-	}
-
-	public void moveSelectedFileTo(Path path) {
-		_fileList.moveTo(path);
-	}
-
-	public void undo() {
-		_fileList.undo();
+	public FileList fileList() {
+		return _fileList;
 	}
 
 	public void setDefaultSize() {
