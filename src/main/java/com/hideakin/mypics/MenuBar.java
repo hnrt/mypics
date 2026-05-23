@@ -17,8 +17,8 @@ public class MenuBar extends JMenuBar {
 
 	private static final long serialVersionUID = -8982333765550751710L;
 
-	public static MenuBar of(ImageViewer viewer) {
-		return new MenuBar(viewer);
+	public static MenuBar create() {
+		return new MenuBar();
 	}
 
 	private static class OpenDirectoryMenu extends JMenu {
@@ -26,11 +26,9 @@ public class MenuBar extends JMenuBar {
 		private static final long serialVersionUID = 2501143286206061265L;
 
 		private final Configuration _configuration = Configuration.getInstance();
-		private final ImageViewer _viewer;
 
-		public OpenDirectoryMenu(String text, ImageViewer viewer) {
+		public OpenDirectoryMenu(String text) {
 			super(text);
-			_viewer = viewer;
 			build();
 		}
 
@@ -98,7 +96,7 @@ public class MenuBar extends JMenuBar {
 		}
 
 		private void changeTo(int index) {
-			_viewer.loadDirectoryFrom(_configuration.getRecent()[index]);
+			ImageViewer.getInstance().loadDirectoryFrom(_configuration.getRecent()[index]);
 		}
 
 		private void browse() {
@@ -107,9 +105,9 @@ public class MenuBar extends JMenuBar {
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(false);
 			chooser.setSelectedFile(_configuration.getDirectory().toFile());
-			int result = chooser.showOpenDialog(_viewer);
+			int result = chooser.showOpenDialog(ImageViewer.getInstance());
 			if (result == JFileChooser.APPROVE_OPTION) {
-				_viewer.loadDirectoryFrom(chooser.getSelectedFile().toPath());
+				ImageViewer.getInstance().loadDirectoryFrom(chooser.getSelectedFile().toPath());
 			}
 		}
 
@@ -120,11 +118,9 @@ public class MenuBar extends JMenuBar {
 		private static final long serialVersionUID = 6868167166919666541L;
 
 		private final Configuration _configuration = Configuration.getInstance();
-		private final ImageViewer _viewer;
 
-		public MoveFileMenu(String text, ImageViewer viewer) {
+		public MoveFileMenu(String text) {
 			super(text);
-			_viewer = viewer;
 			build();
 		}
 
@@ -194,17 +190,15 @@ public class MenuBar extends JMenuBar {
 		}
 
 		private void moveTo(int index) {
-			_viewer.listPane().fileList().moveTo(_configuration.getDestination(index));
+			ImageViewer.getInstance().listPane().fileList().moveTo(_configuration.getDestination(index));
 		}
 
 	}
 
 	private final Configuration _configuration = Configuration.getInstance();
-	private final ImageViewer _viewer;
 
-	private MenuBar(ImageViewer viewer) {
+	private MenuBar() {
 		super();
-		_viewer = viewer;
 		buildFileMenu();
 		buildEditMenu();
 		buildViewMenu();
@@ -215,14 +209,14 @@ public class MenuBar extends JMenuBar {
 	private void buildFileMenu() {
 		JMenu fileMenu = new JMenu("File");
 		fileMenu.setMnemonic(KeyEvent.VK_F);
-		JMenu openDirectoryMenu = new OpenDirectoryMenu("Open directory", _viewer);
+		JMenu openDirectoryMenu = new OpenDirectoryMenu("Open directory");
 		openDirectoryMenu.setMnemonic(KeyEvent.VK_D);
 		JMenuItem openFileItem = new JMenuItem("Open file...");
 		openFileItem.setMnemonic(KeyEvent.VK_F);
 		openFileItem.addActionListener(e -> openFile());
 		JMenuItem exitItem = new JMenuItem("Exit");
 		exitItem.setMnemonic(KeyEvent.VK_X);
-		exitItem.addActionListener(e -> _viewer.close());
+		exitItem.addActionListener(e -> ImageViewer.getInstance().close());
 		fileMenu.add(openDirectoryMenu);
 		fileMenu.add(openFileItem);
 		fileMenu.addSeparator();
@@ -235,21 +229,26 @@ public class MenuBar extends JMenuBar {
 		editMenu.setMnemonic(KeyEvent.VK_E);
 		JMenuItem copyPathItem = new JMenuItem("Copy path");
 		copyPathItem.setMnemonic(KeyEvent.VK_C);
-		copyPathItem.addActionListener(e -> _viewer.listPane().fileList().copyPath());
+		copyPathItem.addActionListener(e -> ImageViewer.getInstance().listPane().fileList().copyPath());
 		editMenu.add(copyPathItem);
 		editMenu.addSeparator();
-		JMenu moveFileMenu = new MoveFileMenu("Move file", _viewer);
+		JMenu moveFileMenu = new MoveFileMenu("Move file");
 		moveFileMenu.setMnemonic(KeyEvent.VK_M);
 		editMenu.add(moveFileMenu);
 		JMenuItem deleteItem = new JMenuItem("Delete file");
 		deleteItem.setMnemonic(KeyEvent.VK_D);
-		deleteItem.addActionListener(e -> _viewer.listPane().fileList().remove());
+		deleteItem.addActionListener(e -> ImageViewer.getInstance().listPane().fileList().remove());
 		editMenu.add(deleteItem);
 		editMenu.addSeparator();
 		JMenuItem undoItem = new JMenuItem("Undo");
 		undoItem.setMnemonic(KeyEvent.VK_U);
-		undoItem.addActionListener(e-> _viewer.listPane().fileList().undo());
+		undoItem.addActionListener(e-> ImageViewer.getInstance().listPane().fileList().undo());
 		editMenu.add(undoItem);
+		editMenu.addSeparator();
+		JMenuItem garbageItem = new JMenuItem("Trash...");
+		garbageItem.setMnemonic(KeyEvent.VK_T);
+		garbageItem.addActionListener(e -> TrashDialogBox.of(ImageViewer.getInstance()).showDialog());
+		editMenu.add(garbageItem);
 		add(editMenu);
 	}
 
@@ -258,11 +257,11 @@ public class MenuBar extends JMenuBar {
 		viewMenu.setMnemonic(KeyEvent.VK_V);
 		JMenuItem rotateRightItem = new JMenuItem("Rotate right");
 		rotateRightItem.setMnemonic(KeyEvent.VK_R);
-		rotateRightItem.addActionListener(e -> _viewer.imagePane().rotateByOrientation(ImageLoader.ROTATE_90_DEGREES));
+		rotateRightItem.addActionListener(e -> ImageViewer.getInstance().imagePane().rotateByOrientation(ImageLoader.ROTATE_90_DEGREES));
 		viewMenu.add(rotateRightItem);
 		JMenuItem rotateLeftItem = new JMenuItem("Rotate left");
 		rotateLeftItem.setMnemonic(KeyEvent.VK_L);
-		rotateLeftItem.addActionListener(e -> _viewer.imagePane().rotateByOrientation(ImageLoader.ROTATE_270_DEGREES));
+		rotateLeftItem.addActionListener(e -> ImageViewer.getInstance().imagePane().rotateByOrientation(ImageLoader.ROTATE_270_DEGREES));
 		viewMenu.add(rotateLeftItem);
 		add(viewMenu);
 	}
@@ -272,15 +271,15 @@ public class MenuBar extends JMenuBar {
 		optionsMenu.setMnemonic(KeyEvent.VK_O);
 		JMenuItem moveDestItem = new JMenuItem("Move destination...");
 		moveDestItem.setMnemonic(KeyEvent.VK_D);
-		moveDestItem.addActionListener(e -> MoveDestinationDialog.of(_viewer).showDialog());
+		moveDestItem.addActionListener(e -> MoveDestinationDialog.of(ImageViewer.getInstance()).showDialog());
 		optionsMenu.add(moveDestItem);
 		JMenuItem preferencesItem = new JMenuItem("Preferences...");
-		preferencesItem.addActionListener(e -> PreferencesDialog.of(_viewer).showDialog());
+		preferencesItem.addActionListener(e -> PreferencesDialog.of(ImageViewer.getInstance()).showDialog());
 		optionsMenu.add(preferencesItem);
 		optionsMenu.addSeparator();
 		JMenuItem defaultSizeItem = new JMenuItem("Default size");
 		defaultSizeItem.setMnemonic(KeyEvent.VK_D);
-		defaultSizeItem.addActionListener(e -> _viewer.setDefaultSize());
+		defaultSizeItem.addActionListener(e -> ImageViewer.getInstance().setDefaultSize());
 		optionsMenu.add(defaultSizeItem);
 		add(optionsMenu);
 	}
@@ -300,9 +299,9 @@ public class MenuBar extends JMenuBar {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Open image file...");
 	   	chooser.setCurrentDirectory(_configuration.getDirectory().toFile());
-		int result = chooser.showOpenDialog(_viewer);
+		int result = chooser.showOpenDialog(ImageViewer.getInstance());
 		if (result == JFileChooser.APPROVE_OPTION) {
-			_viewer.loadImageFrom(chooser.getSelectedFile().toPath());
+			ImageViewer.getInstance().loadImageFrom(chooser.getSelectedFile().toPath());
 		}
 	}
 

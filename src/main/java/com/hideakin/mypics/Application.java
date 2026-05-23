@@ -8,7 +8,7 @@ public class Application {
 	public static final String VERSION = Application.class.getPackage().getImplementationVersion();
 
 	public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ImageViewer().setVisible(true));
+        SwingUtilities.invokeLater(() -> ImageViewer.getInstance().setVisible(true));
     }
 
 }

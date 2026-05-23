@@ -34,6 +34,10 @@ public class ListPane extends JSplitPane {
 		return _fileList;
 	}
 
+	public FileListModel fileListModel() {
+		return _directoryListModel.fileListModel();
+	}
+
 	public void setDefaultSize() {
 		_configuration.setListVerticalDividerLocation(Configuration.DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION);
 		setDividerLocation(_configuration.getListVerticalDividerLocation());

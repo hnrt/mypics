@@ -21,11 +21,27 @@ import javax.swing.KeyStroke;
 
 public class FileList extends JList<Path> {
 
+	public static final int FIRST = 0;
+	public static final int LAST = -1;
+
 	private static final long serialVersionUID = 5229274496231891006L;
 
 	public static FileList of(FileListModel model) {
 		return new FileList(model);
 	}
+
+	private static final String CTRL0 = "ctrl0";
+	private static final String CTRL1 = "ctrl1";
+	private static final String CTRL2 = "ctrl2";
+	private static final String CTRL3 = "ctrl3";
+	private static final String CTRL4 = "ctrl4";
+	private static final String CTRL5 = "ctrl5";
+	private static final String CTRL6 = "ctrl6";
+	private static final String CTRL7 = "ctrl7";
+	private static final String CTRL8 = "ctrl8";
+	private static final String CTRL9 = "ctrl9";
+	private static final String DELETE = "delete";
+	private static final String UNDO = "undo";
 
 	private final Configuration _configuration = Configuration.getInstance();
 	private final FileListModel _model;
@@ -44,79 +60,86 @@ public class FileList extends JList<Path> {
             }
         });
 		InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), "ctrl0");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), "ctrl1");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK), "ctrl2");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK), "ctrl3");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK), "ctrl4");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK), "ctrl5");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_6, InputEvent.CTRL_DOWN_MASK), "ctrl6");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_7, InputEvent.CTRL_DOWN_MASK), "ctrl7");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_8, InputEvent.CTRL_DOWN_MASK), "ctrl8");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK), "ctrl9");
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK), "undo");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), CTRL0);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), CTRL1);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK), CTRL2);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK), CTRL3);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK), CTRL4);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK), CTRL5);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_6, InputEvent.CTRL_DOWN_MASK), CTRL6);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_7, InputEvent.CTRL_DOWN_MASK), CTRL7);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_8, InputEvent.CTRL_DOWN_MASK), CTRL8);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK), CTRL9);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DELETE);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK), UNDO);
         ActionMap am = getActionMap();
-        am.put("ctrl0", new AbstractAction() {
+        am.put(CTRL0, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(0);
             }
         });
-        am.put("ctrl1", new AbstractAction() {
+        am.put(CTRL1, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(1);
             }
         });
-        am.put("ctrl2", new AbstractAction() {
+        am.put(CTRL2, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(2);
             }
         });
-        am.put("ctrl3", new AbstractAction() {
+        am.put(CTRL3, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(3);
             }
         });
-        am.put("ctrl4", new AbstractAction() {
+        am.put(CTRL4, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(4);
             }
         });
-        am.put("ctrl5", new AbstractAction() {
+        am.put(CTRL5, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(5);
             }
         });
-        am.put("ctrl6", new AbstractAction() {
+        am.put(CTRL6, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(6);
             }
         });
-        am.put("ctrl7", new AbstractAction() {
+        am.put(CTRL7, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(7);
             }
         });
-        am.put("ctrl8", new AbstractAction() {
+        am.put(CTRL8, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(8);
             }
         });
-        am.put("ctrl9", new AbstractAction() {
+        am.put(CTRL9, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	moveTo(9);
             }
         });
-        am.put("undo", new AbstractAction() {
+        am.put(DELETE, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	remove();
+            }
+        });
+        am.put(UNDO, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	undo();
@@ -130,6 +153,24 @@ public class FileList extends JList<Path> {
 
 	public void select(Path path) {
 		setSelectedValue(path, true);
+		requestFocusInWindow();
+	}
+
+	public void select(int index) {
+		int n = _model.getSize();
+		if (n < 1) {
+			return;
+		} else if (index < 0) {
+			index = n + index;
+			if (index < 0) {
+				index = 0;
+			}
+		} else if (n <= index) {
+			index = n - 1;
+		}
+		setSelectedIndex(index);
+		ensureIndexIsVisible(index);
+		requestFocusInWindow();
 	}
 
 	private void moveTo(int index) {
@@ -143,9 +184,7 @@ public class FileList extends JList<Path> {
 			try {
 				clearSelection();
 				_model.move(selected, destination);
-				if (0 <= selectedIndex && selectedIndex < _model.getSize()) {
-					setSelectedIndex(selectedIndex);
-				}
+				select(selectedIndex);
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
 			}
@@ -159,9 +198,7 @@ public class FileList extends JList<Path> {
 			try {
 				clearSelection();
 				_model.remove(selected);
-				if (0 <= selectedIndex && selectedIndex < _model.getSize()) {
-					setSelectedIndex(selectedIndex);
-				}
+				select(selectedIndex);
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
 			}
@@ -177,7 +214,7 @@ public class FileList extends JList<Path> {
 			JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
 		}
 		if (selected != null) {
-			setSelectedValue(selected, true);
+			select(selected);
 		}
 	}
 

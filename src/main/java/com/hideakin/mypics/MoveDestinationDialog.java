@@ -16,6 +16,7 @@ public class MoveDestinationDialog extends ModalDialogBox {
 	}
 
 	private static final String ENTER_PRESSED = "enterPressed";
+	private static final String DELETE_PRESSED = "deletePressed";
 
 	private static class Item {
 
@@ -78,12 +79,24 @@ public class MoveDestinationDialog extends ModalDialogBox {
 		JList<Item> list = new JList<>(_model);
 		list.setCellRenderer(new ItemRenderer());
         list.addMouseListener(new ButtonClickListener(list, index -> change(index)));
-        list.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ENTER_PRESSED);
-        list.getActionMap().put(ENTER_PRESSED, new AbstractAction() {
+        InputMap im = list.getInputMap(JComponent.WHEN_FOCUSED);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ENTER_PRESSED);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DELETE_PRESSED);
+        ActionMap am = list.getActionMap();
+        am.put(ENTER_PRESSED, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int index = list.getSelectedIndex();
                 change(index);
+            }
+        });
+        am.put(DELETE_PRESSED, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int index = list.getSelectedIndex();
+                Item item = _model.get(index);
+                item.value = null;
+                _model.set(index, item);
             }
         });
         getContentPane().setLayout(new BorderLayout());
@@ -105,7 +118,7 @@ public class MoveDestinationDialog extends ModalDialogBox {
         int result = chooser.showOpenDialog(null);
         if (result == JFileChooser.APPROVE_OPTION) {
         	item.value = chooser.getSelectedFile().toPath();
-        	_model.set(index, _model.get(index));
+        	_model.set(index, item);
         }
 	}
 
