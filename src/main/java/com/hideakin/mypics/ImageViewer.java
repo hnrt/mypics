@@ -20,6 +20,11 @@ public class ImageViewer extends JFrame {
 		return _singleton;
 	}
 
+	private static final String PREVIOUS_SIBLING_DIRECTORY = "previousSiblingDirectory";
+	private static final String NEXT_SIBLING_DIRECTORY = "nextSiblingDirectory";
+	private static final String PARENT_DIRECTORY = "parentDirectory";
+	private static final String FIRST_SUBDIRECTORY = "firstSubdirectory";
+
 	private final Configuration _configuration = Configuration.getInstance();
 
 	private final MenuBar _menuBar;
@@ -77,22 +82,34 @@ public class ImageViewer extends JFrame {
 		});
 
 		InputMap im = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK), "previousSibling");
-		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK), "nextSibling");
-		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0), "previousSibling");
-		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0), "nextSibling");
-	
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK), PREVIOUS_SIBLING_DIRECTORY);
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), NEXT_SIBLING_DIRECTORY);
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), PARENT_DIRECTORY);
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), FIRST_SUBDIRECTORY);
+
 		ActionMap am = getRootPane().getActionMap();
-		am.put("previousSibling", new AbstractAction() {
+		am.put(PREVIOUS_SIBLING_DIRECTORY, new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				loadPreviousSiblingDirectory();
 			}
 		});
-		am.put("nextSibling", new AbstractAction() {
+		am.put(NEXT_SIBLING_DIRECTORY, new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 			   	loadNextSiblingDirectory();
+			}
+		});
+		am.put(PARENT_DIRECTORY, new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				loadParentDirectory();
+			}
+		});
+		am.put(FIRST_SUBDIRECTORY, new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				loadFirstSubdirectory();
 			}
 		});
 
@@ -161,14 +178,14 @@ public class ImageViewer extends JFrame {
 		try {
 			Path current = _configuration.getDirectory();
 			Path parent = current.getParent();
-			Path found = Files.list(parent)
+			Path target = Files.list(parent)
 					.filter(x -> Files.isDirectory(x))
 					.sorted(Comparator.reverseOrder())
 					.filter(x -> x.compareTo(current) < 0)
 					.findFirst()
 					.orElse(null);
-			if (found != null) {
-				loadDirectoryFrom(found, FileList.LAST);
+			if (target != null) {
+				loadDirectoryFrom(target, FileList.LAST);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -179,14 +196,38 @@ public class ImageViewer extends JFrame {
 		try {
 			Path current = _configuration.getDirectory();
 			Path parent = current.getParent();
-			Path found = Files.list(parent)
+			Path target = Files.list(parent)
 					.filter(x -> Files.isDirectory(x))
 					.sorted()
 					.filter(x -> x.compareTo(current) > 0)
 					.findFirst()
 					.orElse(null);
-			if (found != null) {
-				loadDirectoryFrom(found, FileList.FIRST);
+			if (target != null) {
+				loadDirectoryFrom(target, FileList.FIRST);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void loadParentDirectory() {
+		Path current = _configuration.getDirectory();
+		Path parent = current.getParent();
+		if (Files.exists(parent)) {
+			loadDirectoryFrom(parent, FileList.LAST);
+		}
+	}
+
+	public void loadFirstSubdirectory() {
+		try {
+			Path current = _configuration.getDirectory();
+			Path target = Files.list(current)
+					.filter(x -> Files.isDirectory(x))
+					.sorted()
+					.findFirst()
+					.orElse(null);
+			if (target != null) {
+				loadDirectoryFrom(target, FileList.FIRST);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
