@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
+import java.util.List;
+
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -159,41 +161,29 @@ public class FileList extends JList<Path> {
 	}
 
 	public void moveTo(Path destination) {
-		Path selected = getSelectedValue();
-		if (selected != null) {
-			int selectedIndex = getSelectedIndex();
-			try {
-				clearSelection();
-				_model.move(selected, destination);
-				select(selectedIndex);
-			} catch (Exception e) {
-				Application.mainFrame.showErrorDialog(e.getMessage());
-			}
+		List<Path> selected = getSelectedValuesList();
+		if (selected != null && selected.size() > 0) {
+			int selectedIndex = getSelectionModel().getMinSelectionIndex();
+			clearSelection();
+			_model.move(selected, destination, e -> Application.mainFrame.showErrorDialog(e.getMessage()));
+			select(selectedIndex);
 		}
 	}
 
 	public void remove() {
-		Path selected = getSelectedValue();
-		if (selected != null) {
-			int selectedIndex = getSelectedIndex();
-			try {
-				clearSelection();
-				_model.remove(selected);
-				select(selectedIndex);
-			} catch (Exception e) {
-				Application.mainFrame.showErrorDialog(e.getMessage());
-			}
+		List<Path> selected = getSelectedValuesList();
+		if (selected != null && selected.size() > 0) {
+			int selectedIndex = getSelectionModel().getMinSelectionIndex();
+			clearSelection();
+			_model.remove(selected, e -> Application.mainFrame.showErrorDialog(e.getMessage()));
+			select(selectedIndex);
 		}
 	}
 
 	public void undo() {
 		Path selected = getSelectedValue();
-		try {
-			clearSelection();
-			_model.undo();
-		} catch (Exception e) {
-			Application.mainFrame.showErrorDialog(e.getMessage());
-		}
+		clearSelection();
+		_model.undo(e -> Application.mainFrame.showErrorDialog(e.getMessage()));
 		if (selected != null) {
 			select(selected);
 		}

@@ -73,7 +73,7 @@ public class MoveDestinationDialog extends ModalDialog {
 	private MoveDestinationDialog() {
 		super("Move Destinations (click to change)");
         for (int i = 0; i < NUMBER_OF_DESTINATIONS; i++) {
-        	_model.addElement(new Item(String.format("CTRL+%d", i), Application.configuration.getDestination(i)));
+        	_model.addElement(new Item(String.format("CTRL-%d", i), Application.configuration.getDestination(i)));
         }
 		JList<Item> list = new JList<>(_model);
 		list.setCellRenderer(new ItemRenderer());
