@@ -1,22 +1,23 @@
 package com.hideakin.mypics;
 
 import javax.swing.*;
+
+import static com.hideakin.mypics.Application.ABOUT;
+import static com.hideakin.mypics.Application.VERSION;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
-public class ImageViewer extends JFrame {
+public class MainFrame extends JFrame {
 
-	private static final long serialVersionUID = -3714006055304394239L;
+	private static final long serialVersionUID = -6804531118120406617L;
 
-	private static ImageViewer _singleton;
+	private static final MainFrame _singleton = new MainFrame();
 
-	public static ImageViewer getInstance() {
-		if (_singleton == null) {
-			_singleton = new ImageViewer();
-		}
+	public static MainFrame getInstance() {
 		return _singleton;
 	}
 
@@ -32,7 +33,7 @@ public class ImageViewer extends JFrame {
 	private final ImagePane _imagePane;
 	private final JSplitPane _splitPane;
 
-	private ImageViewer() {
+	private MainFrame() {
 		super("Image Viewer");
 
 		_menuBar = MenuBar.create();
@@ -72,10 +73,10 @@ public class ImageViewer extends JFrame {
 		addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-				int state = ImageViewer.this.getExtendedState();
+				int state = MainFrame.this.getExtendedState();
 				if ((state & (Frame.MAXIMIZED_BOTH | Frame.ICONIFIED)) == 0) {
-					int w = ImageViewer.this.getWidth();
-					int h = ImageViewer.this.getHeight();
+					int w = MainFrame.this.getWidth();
+					int h = MainFrame.this.getHeight();
 					_configuration.setWindowSize(w, h);
 				}
 			}
@@ -137,16 +138,15 @@ public class ImageViewer extends JFrame {
 		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}
 
-	public MenuBar menuBar() {
-		return _menuBar;
+	public void applyChanges() {
+		_menuBar.update();
+		_imagePane.redraw();
 	}
 
-	public ListPane listPane() {
-		return _listPane;
-	}
-
-	public ImagePane imagePane() {
-		return _imagePane;
+	public void reloadDirectory() {
+		Path selected = _listPane.fileList().getSelectedValue();
+		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
+		_listPane.fileList().select(selected);
 	}
 
 	public void loadDirectoryFrom(Path path) {
@@ -157,21 +157,6 @@ public class ImageViewer extends JFrame {
 		_configuration.setDirectory(path);
 		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
 		_listPane.fileList().select(index);
-	}
-
-	public void loadImageFrom(Path path) {
-		_configuration.setDirectory(path.getParent());
-		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
-		_listPane.fileList().select(path);
-	}
-
-	public void setDefaultSize() {
-		_listPane.setDefaultSize();
-		_configuration.setWidth(Configuration.DEFAULT_WIDTH);
-		_configuration.setHeight(Configuration.DEFAULT_HEIGHT);
-		_configuration.setHorizontalDividerLocation(Configuration.DEFAULT_HORIZONTAL_DIVIDER_LOCATION);
-		setSize(_configuration.getWidth(), _configuration.getHeight());
-		_splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
 	}
 
 	public void loadPreviousSiblingDirectory() {
@@ -232,6 +217,50 @@ public class ImageViewer extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void loadImageFrom(Path path) {
+		_configuration.setDirectory(path.getParent());
+		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
+		_listPane.fileList().select(path);
+	}
+
+	public void moveSelectedFileTo(Path path) {
+		_listPane.fileList().moveTo(path);
+	}
+
+	public void copyPathToClipboard() {
+		_listPane.fileList().copyPath();
+	}
+
+	public void removeSelectedFile() {
+		_listPane.fileList().remove();
+	}
+
+	public void undoEditOperation() {
+		_listPane.fileList().undo();
+	}
+
+	public void rotateImageByOrientation(int orientation) {
+		_imagePane.rotateByOrientation(orientation);
+	}
+
+	public void showAboutDialog() {
+		String message = String.format(ABOUT, VERSION);
+		JOptionPane.showMessageDialog(this, message, "About", JOptionPane.PLAIN_MESSAGE);
+	}
+
+	public void showErrorDialog(String text) {
+		JOptionPane.showMessageDialog(this, text, "ERROR", JOptionPane.ERROR_MESSAGE);
+	}
+
+	public void setDefaultSize() {
+		_listPane.setDefaultSize();
+		_configuration.setWidth(Configuration.DEFAULT_WIDTH);
+		_configuration.setHeight(Configuration.DEFAULT_HEIGHT);
+		_configuration.setHorizontalDividerLocation(Configuration.DEFAULT_HORIZONTAL_DIVIDER_LOCATION);
+		setSize(_configuration.getWidth(), _configuration.getHeight());
+		_splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
 	}
 
 }

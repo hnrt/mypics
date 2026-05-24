@@ -16,7 +16,6 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
 public class FileList extends JList<Path> {
@@ -186,7 +185,7 @@ public class FileList extends JList<Path> {
 				_model.move(selected, destination);
 				select(selectedIndex);
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+				Application.mainFrame.showErrorDialog(e.getMessage());
 			}
 		}
 	}
@@ -200,7 +199,7 @@ public class FileList extends JList<Path> {
 				_model.remove(selected);
 				select(selectedIndex);
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+				Application.mainFrame.showErrorDialog(e.getMessage());
 			}
 		}
 	}
@@ -211,7 +210,7 @@ public class FileList extends JList<Path> {
 			clearSelection();
 			_model.undo();
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+			Application.mainFrame.showErrorDialog(e.getMessage());
 		}
 		if (selected != null) {
 			select(selected);

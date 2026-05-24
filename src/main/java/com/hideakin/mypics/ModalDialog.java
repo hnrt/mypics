@@ -8,7 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
-public class ModalDialogBox extends JDialog {
+public class ModalDialog extends JDialog {
 
 	private static final long serialVersionUID = 4039196230449427057L;
 
@@ -16,11 +16,11 @@ public class ModalDialogBox extends JDialog {
 
 		private static final long serialVersionUID = -4661981655248372963L;
 
-		public static ButtonPanel of(ModalDialogBox owner) {
+		public static ButtonPanel of(ModalDialog owner) {
 			return new ButtonPanel(owner);
 		}
 
-		private ButtonPanel(ModalDialogBox owner) {
+		private ButtonPanel(ModalDialog owner) {
 			super();
 			JButton applyButton = new JButton("Apply");
 			applyButton.addActionListener(e -> {
@@ -39,11 +39,8 @@ public class ModalDialogBox extends JDialog {
 		
 	}
 
-	protected final ImageViewer _viewer;
-
-	protected ModalDialogBox(ImageViewer viewer, String title) {
-		super(viewer, title, true);
-		_viewer = viewer;
+	protected ModalDialog(String title) {
+		super(Application.mainFrame, title, true);
         setLayout(new BorderLayout());
 	}
 
@@ -53,13 +50,12 @@ public class ModalDialogBox extends JDialog {
         if (dim.width == 0 && dim.height == 0) {
         	pack();
         }
-        setLocationRelativeTo(_viewer);
+        setLocationRelativeTo(Application.mainFrame);
 		setVisible(true);
 	}
 
 	public void apply() {
-		_viewer.menuBar().update();
-		_viewer.imagePane().redraw();
+		Application.mainFrame.applyChanges();
 	}
 
 }

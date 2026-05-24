@@ -7,12 +7,12 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 import static com.hideakin.mypics.Configuration.NUMBER_OF_DESTINATIONS;
 
-public class MoveDestinationDialog extends ModalDialogBox {
+public class MoveDestinationDialog extends ModalDialog {
 
 	private static final long serialVersionUID = -1768514000467514333L;
 
-	public static MoveDestinationDialog of(ImageViewer viewer) {
-		return new MoveDestinationDialog(viewer);
+	public static MoveDestinationDialog create() {
+		return new MoveDestinationDialog();
 	}
 
 	private static final String ENTER_PRESSED = "enterPressed";
@@ -68,13 +68,12 @@ public class MoveDestinationDialog extends ModalDialogBox {
 
 	}
 
-	private final Configuration _configuration = Configuration.getInstance();
 	private final DefaultListModel<Item> _model = new DefaultListModel<>();
 
-	private MoveDestinationDialog(ImageViewer viewer) {
-		super(viewer, "Move Destinations (click to change)");
+	private MoveDestinationDialog() {
+		super("Move Destinations (click to change)");
         for (int i = 0; i < NUMBER_OF_DESTINATIONS; i++) {
-        	_model.addElement(new Item(String.format("CTRL+%d", i), _configuration.getDestination(i)));
+        	_model.addElement(new Item(String.format("CTRL+%d", i), Application.configuration.getDestination(i)));
         }
 		JList<Item> list = new JList<>(_model);
 		list.setCellRenderer(new ItemRenderer());
@@ -113,7 +112,7 @@ public class MoveDestinationDialog extends ModalDialogBox {
         if (item.value != null) {
         	chooser.setSelectedFile(item.value.toFile());
         } else {
-        	chooser.setSelectedFile(_configuration.getDirectory().toFile());
+        	chooser.setSelectedFile(Application.configuration.getDirectory().toFile());
         }
         int result = chooser.showOpenDialog(null);
         if (result == JFileChooser.APPROVE_OPTION) {
@@ -126,7 +125,7 @@ public class MoveDestinationDialog extends ModalDialogBox {
 	public void apply() {
 		for (int i = 0; i < NUMBER_OF_DESTINATIONS; i++) {
 			Item item = _model.get(i);
-			_configuration.setDestination(i, item.value);
+			Application.configuration.setDestination(i, item.value);
 		}
 		super.apply();
 	}

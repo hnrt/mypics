@@ -9,12 +9,12 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
-public class PreferencesDialog extends ModalDialogBox {
+public class PreferencesDialog extends ModalDialog {
 
 	private static final long serialVersionUID = -3682327462543253658L;
 
-	public static PreferencesDialog of(ImageViewer viewer) {
-		return new PreferencesDialog(viewer);
+	public static PreferencesDialog create() {
+		return new PreferencesDialog();
 	}
 
 	private static class ImageSizePanel extends JPanel {
@@ -56,26 +56,24 @@ public class PreferencesDialog extends ModalDialogBox {
 					new ScaleItem("500%", 5.0)
 			};
 
-			private final Configuration _configuration = Configuration.getInstance();
-
 			public ScaleComboBox() {
 				super(_items);
 				setSelectedIndex(getScaleItemIndex());
 			}
 
 			private int getScaleItemIndex() {
-				double s = _configuration.getScale();
+				double s = Application.configuration.getScale();
 				for (int i = 0; i < _items.length; i++) {
 					if (_items[i].scale == s) {
 						return i;
 					}
 				}
-				_configuration.setScale(_items[3].scale);
+				Application.configuration.setScale(_items[3].scale);
 				return 3;
 			}
 
 			public void apply() {
-				_configuration.setScale(((ScaleItem)getSelectedItem()).scale);
+				Application.configuration.setScale(((ScaleItem)getSelectedItem()).scale);
 			}
 
 		}
@@ -112,7 +110,6 @@ public class PreferencesDialog extends ModalDialogBox {
 
 		}
 
-		private final Configuration _configuration = Configuration.getInstance();
 		private JRadioButton _rb1;
 		private JRadioButton _rb2;
 		private JRadioButton _rb3;
@@ -129,7 +126,7 @@ public class PreferencesDialog extends ModalDialogBox {
 	        group.add(_rb2);
 	        group.add(_rb3);
 	        group.add(_rb4.radioButton());
-	        ScalingMode sm = _configuration.getScalingMode();
+	        ScalingMode sm = Application.configuration.getScalingMode();
 	        if (sm == ScalingMode.FIT_TO_WINDOW) {
 	        	_rb1.setSelected(true);
 	        } else if (sm == ScalingMode.FIT_TO_WINDOW_WIDTH) {
@@ -148,13 +145,13 @@ public class PreferencesDialog extends ModalDialogBox {
 
 		public void apply() {
 			if (_rb1.isSelected()) {
-				_configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW);
+				Application.configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW);
 			} else if (_rb2.isSelected()) {
-				_configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_WIDTH);
+				Application.configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_WIDTH);
 			} else if (_rb3.isSelected()) {
-				_configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_HEIGHT);
+				Application.configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_HEIGHT);
 			} else {
-				_configuration.setScalingMode(ScalingMode.RATIO);
+				Application.configuration.setScalingMode(ScalingMode.RATIO);
 				_rb4.comboBox().apply();
 			}
 		}
@@ -163,8 +160,8 @@ public class PreferencesDialog extends ModalDialogBox {
 
 	private final ImageSizePanel _imageSizePanel;
 
-	private PreferencesDialog(ImageViewer viewer) {
-		super(viewer, "Preferences");
+	private PreferencesDialog() {
+		super("Preferences");
         _imageSizePanel = ImageSizePanel.of("Image Size");
         add(_imageSizePanel, BorderLayout.CENTER);
 	}

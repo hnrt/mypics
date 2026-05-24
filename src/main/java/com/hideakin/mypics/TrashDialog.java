@@ -9,18 +9,17 @@ import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 
-public class TrashDialogBox extends ModalDialogBox {
+public class TrashDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 3096770394969390057L;
 
-	public static TrashDialogBox of(ImageViewer viewer) {
-		return new TrashDialogBox(viewer);
+	public static TrashDialog create() {
+		return new TrashDialog();
 	}
 
 	private static class Item {
@@ -69,11 +68,10 @@ public class TrashDialogBox extends ModalDialogBox {
 
 	}
 
-	private final Configuration _configuration = Configuration.getInstance();
 	private final DefaultListModel<Item> _model = new DefaultListModel<>();
 
-	private TrashDialogBox(ImageViewer viewer) {
-		super(viewer, "Trash (Select items to restore)");
+	private TrashDialog() {
+		super("Trash (Select items to restore)");
 		UndoManager.getInstance()
 			.trash()
 			.stream()
@@ -113,14 +111,12 @@ public class TrashDialogBox extends ModalDialogBox {
 						restored++;
 					}
 				} catch (Exception e) {
-					JOptionPane.showMessageDialog(this, e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+					Application.mainFrame.showErrorDialog(e.getMessage());
 				}
 			}
 		}
 		if (restored > 0) {
-			Path selected = _viewer.listPane().fileList().getSelectedValue();
-			_viewer.loadDirectoryFrom(_configuration.getDirectory());
-			_viewer.listPane().fileList().select(selected);
+			Application.mainFrame.reloadDirectory();
 		}
 		super.apply();
 	}
