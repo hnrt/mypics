@@ -11,30 +11,9 @@ public class DirectoryList extends JList<Path> {
 		return new DirectoryList(model);
 	}
 
-	private final Configuration _configuration = Configuration.getInstance();
-	private final DirectoryListModel _model;
-
 	private DirectoryList(DirectoryListModel model) {
 		super(model);
-		_model = model;
 		setCellRenderer(new FileNameRenderer());
-		addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                Path selected = getSelectedValue();
-                if (selected != null) {
-                	if (selected.toString().equals("..")) {
-                		Path parent = _configuration.getDirectory().getParent();
-                		if (parent != null) {
-                			_model.loadFrom(parent);
-                		} else {
-                			clearSelection();
-                		}
-                	} else {
-            			_model.loadFrom(selected);
-                	}
-                }
-            }
-        });
 	}
 
 }

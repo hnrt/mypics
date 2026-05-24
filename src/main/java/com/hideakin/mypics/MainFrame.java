@@ -21,12 +21,11 @@ public class MainFrame extends JFrame {
 		return _singleton;
 	}
 
+	private static final String RELOAD_DIRECTORY = "reloadDirectory";
 	private static final String PREVIOUS_SIBLING_DIRECTORY = "previousSiblingDirectory";
 	private static final String NEXT_SIBLING_DIRECTORY = "nextSiblingDirectory";
 	private static final String PARENT_DIRECTORY = "parentDirectory";
 	private static final String FIRST_SUBDIRECTORY = "firstSubdirectory";
-
-	private final Configuration _configuration = Configuration.getInstance();
 
 	private final MenuBar _menuBar;
 	private final ListPane _listPane;
@@ -45,9 +44,9 @@ public class MainFrame extends JFrame {
 				_listPane,
 				_imagePane
 		);
-		_splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
+		_splitPane.setDividerLocation(Application.configuration.getHorizontalDividerLocation());
 		_splitPane.addPropertyChangeListener("dividerLocation", e -> {
-			_configuration.setHorizontalDividerLocation((int)e.getNewValue());
+			Application.configuration.setHorizontalDividerLocation((int)e.getNewValue());
 		});
 		add(_splitPane, BorderLayout.CENTER);
 
@@ -58,12 +57,12 @@ public class MainFrame extends JFrame {
 		addWindowListener(new WindowAdapter() {
 		    @Override
 		    public void windowOpened(WindowEvent e) {
-				_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
+				_listPane.loadFrom(Application.configuration.getDirectory());
 				_listPane.fileList().select(FileList.FIRST);
 		    }
 			@Override
 			public void windowClosing(WindowEvent e) {
-				_configuration.save();
+				Application.configuration.save();
 				UndoManager.getInstance().clear();
 				UndoManager.getInstance().clearTrash();
 				System.exit(0);
@@ -77,18 +76,25 @@ public class MainFrame extends JFrame {
 				if ((state & (Frame.MAXIMIZED_BOTH | Frame.ICONIFIED)) == 0) {
 					int w = MainFrame.this.getWidth();
 					int h = MainFrame.this.getHeight();
-					_configuration.setWindowSize(w, h);
+					Application.configuration.setWindowSize(w, h);
 				}
 			}
 		});
 
 		InputMap im = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), RELOAD_DIRECTORY);
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK), PREVIOUS_SIBLING_DIRECTORY);
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), NEXT_SIBLING_DIRECTORY);
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), PARENT_DIRECTORY);
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), FIRST_SUBDIRECTORY);
 
 		ActionMap am = getRootPane().getActionMap();
+		am.put(RELOAD_DIRECTORY, new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				reloadDirectory();
+			}
+		});
 		am.put(PREVIOUS_SIBLING_DIRECTORY, new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -114,23 +120,23 @@ public class MainFrame extends JFrame {
 			}
 		});
 
-		_listPane.directoryListModel().onChanged(path -> {
+		_listPane.onChanged(path -> {
 			setTitle(String.format("%s", path));
 			_menuBar.update();
 		});
-		_listPane.fileList().onSelected(path -> {
+		_listPane.onSelected(path -> {
 			_imagePane.loadFrom(path);
 		});
 
 		_imagePane.onChanged(pane -> {
 			if (pane.path() == null) {
-				setTitle(String.format("%s", _configuration.getDirectory()));
+				setTitle(String.format("%s", Application.configuration.getDirectory()));
 			} else {
 				setTitle(String.format("%s [%d%%]", pane.path(), (int)(pane.scale() * 100)));
 			}
 		});
 
-		setSize(_configuration.getWidth(), _configuration.getHeight());
+		setSize(Application.configuration.getWidth(), Application.configuration.getHeight());
 		setLocationRelativeTo(null);
 	}
 
@@ -145,23 +151,26 @@ public class MainFrame extends JFrame {
 
 	public void reloadDirectory() {
 		Path selected = _listPane.fileList().getSelectedValue();
-		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
+		_listPane.loadFrom(Application.configuration.getDirectory());
 		_listPane.fileList().select(selected);
 	}
 
 	public void loadDirectoryFrom(Path path) {
-		loadDirectoryFrom(path, FileList.FIRST);
+		Application.configuration.setDirectory(path);
+		Path selected = _listPane.previouslySelected();
+		_listPane.loadFrom(Application.configuration.getDirectory());
+		_listPane.fileList().select(selected);
 	}
 
 	public void loadDirectoryFrom(Path path, int index) {
-		_configuration.setDirectory(path);
-		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
+		Application.configuration.setDirectory(path);
+		_listPane.loadFrom(Application.configuration.getDirectory());
 		_listPane.fileList().select(index);
 	}
 
 	public void loadPreviousSiblingDirectory() {
 		try {
-			Path current = _configuration.getDirectory();
+			Path current = Application.configuration.getDirectory();
 			Path parent = current.getParent();
 			Path target = Files.list(parent)
 					.filter(x -> Files.isDirectory(x))
@@ -179,7 +188,7 @@ public class MainFrame extends JFrame {
 
 	public void loadNextSiblingDirectory() {
 		try {
-			Path current = _configuration.getDirectory();
+			Path current = Application.configuration.getDirectory();
 			Path parent = current.getParent();
 			Path target = Files.list(parent)
 					.filter(x -> Files.isDirectory(x))
@@ -196,7 +205,7 @@ public class MainFrame extends JFrame {
 	}
 
 	public void loadParentDirectory() {
-		Path current = _configuration.getDirectory();
+		Path current = Application.configuration.getDirectory();
 		Path parent = current.getParent();
 		if (Files.exists(parent)) {
 			loadDirectoryFrom(parent, FileList.LAST);
@@ -205,7 +214,7 @@ public class MainFrame extends JFrame {
 
 	public void loadFirstSubdirectory() {
 		try {
-			Path current = _configuration.getDirectory();
+			Path current = Application.configuration.getDirectory();
 			Path target = Files.list(current)
 					.filter(x -> Files.isDirectory(x))
 					.sorted()
@@ -220,8 +229,8 @@ public class MainFrame extends JFrame {
 	}
 
 	public void loadImageFrom(Path path) {
-		_configuration.setDirectory(path.getParent());
-		_listPane.directoryListModel().loadFrom(_configuration.getDirectory());
+		Application.configuration.setDirectory(path.getParent());
+		_listPane.loadFrom(Application.configuration.getDirectory());
 		_listPane.fileList().select(path);
 	}
 
@@ -256,11 +265,11 @@ public class MainFrame extends JFrame {
 
 	public void setDefaultSize() {
 		_listPane.setDefaultSize();
-		_configuration.setWidth(Configuration.DEFAULT_WIDTH);
-		_configuration.setHeight(Configuration.DEFAULT_HEIGHT);
-		_configuration.setHorizontalDividerLocation(Configuration.DEFAULT_HORIZONTAL_DIVIDER_LOCATION);
-		setSize(_configuration.getWidth(), _configuration.getHeight());
-		_splitPane.setDividerLocation(_configuration.getHorizontalDividerLocation());
+		Application.configuration.setWidth(Configuration.DEFAULT_WIDTH);
+		Application.configuration.setHeight(Configuration.DEFAULT_HEIGHT);
+		Application.configuration.setHorizontalDividerLocation(Configuration.DEFAULT_HORIZONTAL_DIVIDER_LOCATION);
+		setSize(Application.configuration.getWidth(), Application.configuration.getHeight());
+		_splitPane.setDividerLocation(Application.configuration.getHorizontalDividerLocation());
 	}
 
 }

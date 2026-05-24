@@ -1,5 +1,13 @@
 package com.hideakin.mypics;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
@@ -11,19 +19,58 @@ public class ListPane extends JSplitPane {
 		return new ListPane();
 	}
 
-	private final Configuration _configuration = Configuration.getInstance();
-	private final DirectoryListModel _directoryListModel = DirectoryListModel.create(FileListModel.create());
+	private final DirectoryListModel _directoryListModel = DirectoryListModel.create();
 	private final DirectoryList _directoryList = DirectoryList.of(_directoryListModel);
-	private final FileList _fileList = FileList.of(_directoryListModel.fileListModel());
+	private final FileListModel _fileListModel = FileListModel.create();
+	private final FileList _fileList = FileList.of(_fileListModel);
+	private final List<Consumer<Path>> _onChanged = new ArrayList<>();
+	private final List<Consumer<Path>> _onSelected = new ArrayList<>();
+	private final Map<Path, Path> _selectedFiles = new HashMap<>();
 
 	private ListPane() {
 		super(JSplitPane.VERTICAL_SPLIT);
 		setTopComponent(new JScrollPane(_directoryList));
 		setBottomComponent(new JScrollPane(_fileList));
-		setDividerLocation(_configuration.getListVerticalDividerLocation());
-		addPropertyChangeListener("dividerLocation", e -> {
-        	_configuration.setListVerticalDividerLocation((int)e.getNewValue());
+		_directoryList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                Path selected = _directoryList.getSelectedValue();
+                if (selected != null) {
+                	if (_directoryListModel.isParentDirectory(selected)) {
+                		Path parent = Application.configuration.getDirectory().getParent();
+                		if (parent != null) {
+                			Path selectedFile = _selectedFiles.get(parent);
+                			loadFrom(parent);
+                    		_fileList.select(selectedFile);
+                		} else {
+                			_directoryList.clearSelection();
+                		}
+                	} else {
+                		Path selectedFile = _selectedFiles.get(selected);
+                		loadFrom(selected);
+                		_fileList.select(selectedFile);
+                	}
+                }
+            }
         });
+		_fileList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+            	Path selected = _fileList.getSelectedValue();
+        		_selectedFiles.put(Application.configuration.getDirectory(), selected);
+            	for (Consumer<Path> cb : _onSelected) {
+            		cb.accept(selected);
+            	}
+            }
+        });
+		setDividerLocation(Application.configuration.getListVerticalDividerLocation());
+		addPropertyChangeListener("dividerLocation", e -> Application.configuration.setListVerticalDividerLocation((int)e.getNewValue()));
+	}
+
+	public void onChanged(Consumer<Path> callback) {
+		_onChanged.add(callback);
+	}
+
+	public void onSelected(Consumer<Path> callback) {
+		_onSelected.add(callback);
 	}
 
 	public DirectoryListModel directoryListModel() {
@@ -35,12 +82,37 @@ public class ListPane extends JSplitPane {
 	}
 
 	public FileListModel fileListModel() {
-		return _directoryListModel.fileListModel();
+		return _fileListModel;
+	}
+
+	public Path previouslySelected() {
+		return _selectedFiles.get(Application.configuration.getDirectory());
+	}
+
+	public void loadFrom(Path directory) {
+		Application.configuration.setDirectory(directory);
+		_fileListModel.clear();
+		_directoryListModel.clear();
+		_directoryListModel.addParentDirectory(directory);
+		try {
+			Files.list(directory).sorted().forEach((e) -> {
+				if (Files.isDirectory(e)) {
+					_directoryListModel.addElement(e);
+				} else if (Files.isRegularFile(e)) {
+					_fileListModel.addElement(e);
+				}
+			});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		for (Consumer<Path> cb : _onChanged) {
+			cb.accept(directory);
+		}
 	}
 
 	public void setDefaultSize() {
-		_configuration.setListVerticalDividerLocation(Configuration.DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION);
-		setDividerLocation(_configuration.getListVerticalDividerLocation());
+		Application.configuration.setListVerticalDividerLocation(Configuration.DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION);
+		setDividerLocation(Application.configuration.getListVerticalDividerLocation());
 	}
 
 }

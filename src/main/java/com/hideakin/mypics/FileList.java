@@ -7,10 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -42,22 +38,12 @@ public class FileList extends JList<Path> {
 	private static final String DELETE = "delete";
 	private static final String UNDO = "undo";
 
-	private final Configuration _configuration = Configuration.getInstance();
 	private final FileListModel _model;
-	private final List<Consumer<Path>> _onSelected = new ArrayList<>();
 
 	private FileList(FileListModel model) {
 		super(model);
 		_model = model;
 		setCellRenderer(new FileNameRenderer());
-		addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-            	Path selected = getSelectedValue();
-            	for (Consumer<Path> cb : _onSelected) {
-            		cb.accept(selected);
-            	}
-            }
-        });
 		InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), CTRL0);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), CTRL1);
@@ -146,10 +132,6 @@ public class FileList extends JList<Path> {
         });
 	}
 
-	public void onSelected(Consumer<Path> callback) {
-		_onSelected.add(callback);
-	}
-
 	public void select(Path path) {
 		setSelectedValue(path, true);
 		requestFocusInWindow();
@@ -173,7 +155,7 @@ public class FileList extends JList<Path> {
 	}
 
 	private void moveTo(int index) {
-		moveTo(_configuration.getDestination(index));
+		moveTo(Application.configuration.getDestination(index));
 	}
 
 	public void moveTo(Path destination) {
