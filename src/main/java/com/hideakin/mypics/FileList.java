@@ -165,7 +165,7 @@ public class FileList extends JList<Path> {
 		if (selected != null && selected.size() > 0) {
 			int selectedIndex = getSelectionModel().getMinSelectionIndex();
 			clearSelection();
-			_model.move(selected, destination, e -> Application.mainFrame.showErrorDialog(e.getMessage()));
+			_model.move(selected, destination, e -> Application.mainFrame.showErrorDialog(e));
 			select(selectedIndex);
 		}
 	}
@@ -175,7 +175,7 @@ public class FileList extends JList<Path> {
 		if (selected != null && selected.size() > 0) {
 			int selectedIndex = getSelectionModel().getMinSelectionIndex();
 			clearSelection();
-			_model.remove(selected, e -> Application.mainFrame.showErrorDialog(e.getMessage()));
+			_model.remove(selected, e -> Application.mainFrame.showErrorDialog(e));
 			select(selectedIndex);
 		}
 	}
@@ -183,7 +183,7 @@ public class FileList extends JList<Path> {
 	public void undo() {
 		Path selected = getSelectedValue();
 		clearSelection();
-		_model.undo(e -> Application.mainFrame.showErrorDialog(e.getMessage()));
+		_model.undo(e -> Application.mainFrame.showErrorDialog(e));
 		if (selected != null) {
 			select(selected);
 		}

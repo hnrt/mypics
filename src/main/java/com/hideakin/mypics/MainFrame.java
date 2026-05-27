@@ -7,6 +7,7 @@ import static com.hideakin.mypics.Application.VERSION;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -260,6 +261,16 @@ public class MainFrame extends JFrame {
 	}
 
 	public void showErrorDialog(String text) {
+		JOptionPane.showMessageDialog(this, text, "ERROR", JOptionPane.ERROR_MESSAGE);
+	}
+
+	public void showErrorDialog(Exception e) {
+		String text;
+		if (e instanceof FileAlreadyExistsException ex) {
+			text = String.format("File already exists:\n%s", ex.getMessage());
+		} else {
+			text = e.getMessage();
+		}
 		JOptionPane.showMessageDialog(this, text, "ERROR", JOptionPane.ERROR_MESSAGE);
 	}
 
