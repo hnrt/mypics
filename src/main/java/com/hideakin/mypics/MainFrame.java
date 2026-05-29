@@ -32,6 +32,7 @@ public class MainFrame extends JFrame {
 	private final ListPane _listPane;
 	private final ImagePane _imagePane;
 	private final JSplitPane _splitPane;
+	private Path _pathToOpen;
 
 	private MainFrame() {
 		super("Image Viewer");
@@ -58,8 +59,21 @@ public class MainFrame extends JFrame {
 		addWindowListener(new WindowAdapter() {
 		    @Override
 		    public void windowOpened(WindowEvent e) {
-				_listPane.loadFrom(Application.configuration.getDirectory());
-				_listPane.fileList().select(FileList.FIRST);
+		    	System.err.print("#windowOpened\n");
+		    	if (_pathToOpen == null) {
+		    		_listPane.loadFrom(Application.configuration.getDirectory());
+		    		_listPane.fileList().select(FileList.FIRST);
+		    	} else if (Files.isDirectory(_pathToOpen)) {
+		    		_listPane.loadFrom(_pathToOpen.toAbsolutePath());
+		    		_listPane.fileList().select(FileList.FIRST);
+		    	} else if (Files.isRegularFile(_pathToOpen)) {
+		    		Path filePath = _pathToOpen.toAbsolutePath();
+		    		_listPane.loadFrom(filePath.getParent());
+		    		_listPane.fileList().select(filePath);
+		    	} else {
+		    		showErrorDialog(String.format("Unable to open\n%s", _pathToOpen));
+		    		close();
+		    	}
 		    }
 			@Override
 			public void windowClosing(WindowEvent e) {
@@ -141,6 +155,10 @@ public class MainFrame extends JFrame {
 		setLocationRelativeTo(null);
 	}
 
+	public void setPathToOpen(Path path) {
+		_pathToOpen = path;
+	}
+
 	public void close() {
 		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}
@@ -157,15 +175,13 @@ public class MainFrame extends JFrame {
 	}
 
 	public void loadDirectoryFrom(Path path) {
-		Application.configuration.setDirectory(path);
-		Path selected = _listPane.previouslySelected();
-		_listPane.loadFrom(Application.configuration.getDirectory());
+		Path selected = _listPane.previouslySelected(path);
+		_listPane.loadFrom(path);
 		_listPane.fileList().select(selected);
 	}
 
 	public void loadDirectoryFrom(Path path, int index) {
-		Application.configuration.setDirectory(path);
-		_listPane.loadFrom(Application.configuration.getDirectory());
+		_listPane.loadFrom(path);
 		_listPane.fileList().select(index);
 	}
 

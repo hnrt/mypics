@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JViewport;
 
 public class ListPane extends JSplitPane {
 
@@ -25,6 +26,7 @@ public class ListPane extends JSplitPane {
 	private final FileList _fileList = FileList.of(_fileListModel);
 	private final List<Consumer<Path>> _onChanged = new ArrayList<>();
 	private final List<Consumer<Path>> _onSelected = new ArrayList<>();
+	private final Map<Path, Integer> _firstIndexes = new HashMap<>();
 	private final Map<Path, Path> _selectedFiles = new HashMap<>();
 
 	private ListPane() {
@@ -85,11 +87,20 @@ public class ListPane extends JSplitPane {
 		return _fileListModel;
 	}
 
-	public Path previouslySelected() {
-		return _selectedFiles.get(Application.configuration.getDirectory());
+	public Path previouslySelected(Path directory) {
+		return _selectedFiles.get(directory);
 	}
 
 	public void loadFrom(Path directory) {
+		if (_directoryListModel.getSize() > 0) {
+			Path last = Application.configuration.getDirectory();
+			if (last != null) {
+				int first = _directoryList.getFirstVisibleIndex();
+				if (first > -1) {
+					_firstIndexes.put(last, Integer.valueOf(first));
+				}
+			}
+		}
 		Application.configuration.setDirectory(directory);
 		_fileListModel.clear();
 		_directoryListModel.clear();
@@ -104,6 +115,15 @@ public class ListPane extends JSplitPane {
 			});
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+		Integer index = _firstIndexes.get(directory);
+		if (index != null && index < _directoryListModel.getSize()) {
+			java.awt.Rectangle rect = _directoryList.getCellBounds(index, index);
+			if (rect != null) {
+				JViewport viewport = ((JScrollPane)getTopComponent()).getViewport();
+				java.awt.Point position = new java.awt.Point(0, rect.y);
+				viewport.setViewPosition(position);
+			}
 		}
 		for (Consumer<Path> cb : _onChanged) {
 			cb.accept(directory);
