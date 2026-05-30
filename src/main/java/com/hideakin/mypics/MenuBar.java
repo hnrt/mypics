@@ -5,6 +5,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -40,6 +41,24 @@ public class MenuBar extends JMenuBar {
 
 		public JMenuItem addMenuItem(String label, int mnemonic, KeyStroke ks, ActionListener al) {
 			JMenuItem menuItem = new JMenuItem(label);
+			menuItem.setMnemonic(mnemonic);
+			menuItem.addActionListener(al);
+			menuItem.setAccelerator(ks);
+			add(menuItem);
+			return menuItem;
+		}
+
+		public JCheckBoxMenuItem addCheckBoxMenuItem(String label, int mnemonic, ActionListener al) {
+			JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(label);
+			menuItem.setMnemonic(mnemonic);
+			menuItem.addActionListener(al);
+			add(menuItem);
+			return menuItem;
+		}
+
+		@SuppressWarnings("unused")
+		public JCheckBoxMenuItem addCheckBoxMenuItem(String label, int mnemonic, KeyStroke ks, ActionListener al) {
+			JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(label);
 			menuItem.setMnemonic(mnemonic);
 			menuItem.addActionListener(al);
 			menuItem.setAccelerator(ks);
@@ -249,8 +268,10 @@ public class MenuBar extends JMenuBar {
 
 	private void buildOptionsMenu() {
 		Menu menu = createMenu("Options", KeyEvent.VK_O);
-		menu.addMenuItem("Move destination...", KeyEvent.VK_D, e -> MoveDestinationDialog.create().showDialog());
+		menu.addMenuItem("Move destination...", KeyEvent.VK_M, e -> MoveDestinationDialog.create().showDialog());
 		menu.addMenuItem("Preferences...", KeyEvent.VK_P, e -> PreferencesDialog.create().showDialog());
+		menu.addSeparator();
+		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> Application.mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility());
 		menu.addSeparator();
 		menu.addMenuItem("Default size", KeyEvent.VK_D, e -> Application.mainFrame.setDefaultSize());
 	}
@@ -279,6 +300,7 @@ public class MenuBar extends JMenuBar {
 	public void update() {
 		((OpenDirectoryMenu)findMenuByName("FileOpenDirectory")).build();
 		((MoveFileMenu)findMenuByName("EditMoveFile")).build();
+		findMenuItemByName("OptionsFilterDirectory").setSelected(Application.mainFrame.listPane().getDirectoryFilterTextFieldVisibility());
 	}
 
 	public void enablePath(boolean enabled) {

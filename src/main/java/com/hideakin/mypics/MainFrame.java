@@ -165,6 +165,10 @@ public class MainFrame extends JFrame {
 		_pathToOpen = path;
 	}
 
+	public ListPane listPane() {
+		return _listPane;
+	}
+
 	public void close() {
 		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}

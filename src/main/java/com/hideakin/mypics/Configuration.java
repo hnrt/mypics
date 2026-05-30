@@ -50,6 +50,7 @@ public class Configuration {
 		public long moveFileInterval = 300L;
 		public int horizontalDividerLocation = DEFAULT_HORIZONTAL_DIVIDER_LOCATION;
 		public int listVerticalDividerLocation = DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION;
+		public boolean directoryFilterVisibility = true;
 
 		public ConfigurationDocument() {
 			recent[0] = Path.of("").toAbsolutePath();
@@ -68,6 +69,7 @@ public class Configuration {
 			Application.debug(3, "ConfigurationDocument: moveFileInterval=%d", moveFileInterval);
 			Application.debug(3, "ConfigurationDocument: horizontalDividerLocation=%d", horizontalDividerLocation);
 			Application.debug(3, "ConfigurationDocument: listVerticalDividerLocation=%d", listVerticalDividerLocation);
+			Application.debug(3, "ConfigurationDocument: filterDirectoryVisibility=%s", directoryFilterVisibility ? "true" : "false");
 		}
 
 	}
@@ -259,6 +261,14 @@ public class Configuration {
 
 	public void setListVerticalDividerLocation(int value) {
 		_document.listVerticalDividerLocation = value;
+	}
+
+	public boolean getDirectoryFilterVisibility() {
+		return _document.directoryFilterVisibility;
+	}
+
+	public void setDirectoryFilterVisibility(boolean value) {
+		_document.directoryFilterVisibility = value;
 	}
 
 }
