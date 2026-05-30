@@ -59,7 +59,7 @@ public class MainFrame extends JFrame {
 		addWindowListener(new WindowAdapter() {
 		    @Override
 		    public void windowOpened(WindowEvent e) {
-		    	System.err.print("#windowOpened\n");
+		    	Application.debug(3, "windowOpened");
 		    	if (_pathToOpen == null) {
 		    		_listPane.loadFrom(Application.configuration.getDirectory());
 		    		_listPane.fileList().select(FileList.FIRST);
@@ -77,6 +77,7 @@ public class MainFrame extends JFrame {
 		    }
 			@Override
 			public void windowClosing(WindowEvent e) {
+		    	Application.debug(3, "windowClosing");
 				Application.configuration.save();
 				UndoManager.getInstance().clear();
 				UndoManager.getInstance().clearTrash();
@@ -136,14 +137,17 @@ public class MainFrame extends JFrame {
 		});
 
 		_listPane.onChanged(path -> {
+	    	Application.debug(3, "listPane.onChanged(%s)", path);
 			setTitle(String.format("%s", path));
 			_menuBar.update();
 		});
 		_listPane.onSelected(path -> {
+	    	Application.debug(3, "listPane.onSelected(%s)", path);
 			_imagePane.loadFrom(path);
 		});
 
 		_imagePane.onChanged(pane -> {
+	    	Application.debug(3, "imagePane.onChanged(%s)", pane.path());
 			if (pane.path() == null) {
 				setTitle(String.format("%s", Application.configuration.getDirectory()));
 			} else {
@@ -169,15 +173,11 @@ public class MainFrame extends JFrame {
 	}
 
 	public void reloadDirectory() {
-		Path selected = _listPane.fileList().getSelectedValue();
 		_listPane.loadFrom(Application.configuration.getDirectory());
-		_listPane.fileList().select(selected);
 	}
 
 	public void loadDirectoryFrom(Path path) {
-		Path selected = _listPane.previouslySelected(path);
 		_listPane.loadFrom(path);
-		_listPane.fileList().select(selected);
 	}
 
 	public void loadDirectoryFrom(Path path, int index) {
@@ -225,7 +225,7 @@ public class MainFrame extends JFrame {
 		Path current = Application.configuration.getDirectory();
 		Path parent = current.getParent();
 		if (Files.exists(parent)) {
-			loadDirectoryFrom(parent, FileList.LAST);
+			loadDirectoryFrom(parent);
 		}
 	}
 
@@ -238,7 +238,7 @@ public class MainFrame extends JFrame {
 					.findFirst()
 					.orElse(null);
 			if (target != null) {
-				loadDirectoryFrom(target, FileList.FIRST);
+				loadDirectoryFrom(target);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

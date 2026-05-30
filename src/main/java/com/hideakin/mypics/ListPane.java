@@ -26,8 +26,9 @@ public class ListPane extends JSplitPane {
 	private final FileList _fileList = FileList.of(_fileListModel);
 	private final List<Consumer<Path>> _onChanged = new ArrayList<>();
 	private final List<Consumer<Path>> _onSelected = new ArrayList<>();
-	private final Map<Path, Integer> _firstIndexes = new HashMap<>();
+	private final Map<Path, Integer> _directoryListFirstLines = new HashMap<>();
 	private final Map<Path, Path> _selectedFiles = new HashMap<>();
+	private boolean _internallyProcessing = false;
 
 	private ListPane() {
 		super(JSplitPane.VERTICAL_SPLIT);
@@ -35,32 +36,40 @@ public class ListPane extends JSplitPane {
 		setBottomComponent(new JScrollPane(_fileList));
 		_directoryList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                Path selected = _directoryList.getSelectedValue();
-                if (selected != null) {
-                	if (_directoryListModel.isParentDirectory(selected)) {
-                		Path parent = Application.configuration.getDirectory().getParent();
-                		if (parent != null) {
-                			Path selectedFile = _selectedFiles.get(parent);
-                			loadFrom(parent);
-                    		_fileList.select(selectedFile);
-                		} else {
-                			_directoryList.clearSelection();
-                		}
-                	} else {
-                		Path selectedFile = _selectedFiles.get(selected);
-                		loadFrom(selected);
-                		_fileList.select(selectedFile);
-                	}
-                }
+            	if (_internallyProcessing) return;
+    	    	Application.debug(3, "directoryList.Selection");
+            	Path selected = _directoryList.getSelectedValue();
+            	if (selected != null) {
+            		if (_directoryListModel.isParentDirectory(selected)) {
+            			Path parent = Application.configuration.getDirectory().getParent();
+            			if (parent != null) {
+            				loadFrom(parent);
+            			} else {
+            				try {
+            					_internallyProcessing = true;
+            					_directoryList.clearSelection();
+            				} finally {
+            					_internallyProcessing = false;
+            				}
+            			}
+            		} else {
+            			loadFrom(selected);
+            		}
+            	}
             }
         });
 		_fileList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-            	Path selected = _fileList.getSelectedValue();
-        		_selectedFiles.put(Application.configuration.getDirectory(), selected);
-            	for (Consumer<Path> cb : _onSelected) {
-            		cb.accept(selected);
-            	}
+            	if (_internallyProcessing) return;
+    	    	Application.debug(3, "fileList.Selection");
+            	try {
+        			_internallyProcessing = true;
+        			Path selected = _fileList.getSelectedValue();
+        			_selectedFiles.put(Application.configuration.getDirectory(), selected);
+        			invokeOnSelected(selected);
+            	} finally {
+        			_internallyProcessing = false;
+        		}
             }
         });
 		setDividerLocation(Application.configuration.getListVerticalDividerLocation());
@@ -75,48 +84,49 @@ public class ListPane extends JSplitPane {
 		_onSelected.add(callback);
 	}
 
-	public DirectoryListModel directoryListModel() {
-		return _directoryListModel;
-	}
-
 	public FileList fileList() {
 		return _fileList;
 	}
 
-	public FileListModel fileListModel() {
-		return _fileListModel;
-	}
-
-	public Path previouslySelected(Path directory) {
-		return _selectedFiles.get(directory);
-	}
-
 	public void loadFrom(Path directory) {
-		if (_directoryListModel.getSize() > 0) {
-			Path last = Application.configuration.getDirectory();
-			if (last != null) {
-				int first = _directoryList.getFirstVisibleIndex();
-				if (first > -1) {
-					_firstIndexes.put(last, Integer.valueOf(first));
-				}
+		try {
+			_internallyProcessing = true;
+			saveDirectoryListState(Application.configuration.getDirectory());
+			Application.configuration.setDirectory(directory);
+			_fileListModel.clear();
+			_directoryListModel.clear();
+			_directoryListModel.addParentDirectory(directory);
+			try {
+				Files.list(directory).sorted().forEach((e) -> {
+					if (Files.isDirectory(e)) {
+						_directoryListModel.addElement(e);
+					} else if (Files.isRegularFile(e)) {
+						_fileListModel.addElement(e);
+					}
+				});
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			restoreDirectoryListState(directory);
+			invokeOnChanged(directory);
+			restoreFileListState(directory);
+			invokeOnSelected(_fileList.getSelectedValue());
+		} finally {
+			_internallyProcessing = false;
+		}
+	}
+
+	private void saveDirectoryListState(Path directory) {
+		if (directory != null && _directoryListModel.getSize() > 0) {
+			int index = _directoryList.getFirstVisibleIndex();
+			if (index > -1) {
+				_directoryListFirstLines.put(directory, Integer.valueOf(index));
 			}
 		}
-		Application.configuration.setDirectory(directory);
-		_fileListModel.clear();
-		_directoryListModel.clear();
-		_directoryListModel.addParentDirectory(directory);
-		try {
-			Files.list(directory).sorted().forEach((e) -> {
-				if (Files.isDirectory(e)) {
-					_directoryListModel.addElement(e);
-				} else if (Files.isRegularFile(e)) {
-					_fileListModel.addElement(e);
-				}
-			});
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		Integer index = _firstIndexes.get(directory);
+	}
+
+	private void restoreDirectoryListState(Path directory) {
+		Integer index = _directoryListFirstLines.get(directory);
 		if (index != null && index < _directoryListModel.getSize()) {
 			java.awt.Rectangle rect = _directoryList.getCellBounds(index, index);
 			if (rect != null) {
@@ -125,8 +135,24 @@ public class ListPane extends JSplitPane {
 				viewport.setViewPosition(position);
 			}
 		}
+	}
+
+	private void restoreFileListState(Path directory) {
+		Path selected = _selectedFiles.get(directory);
+		if (selected != null) {
+			_fileList.setSelectedValue(selected, true);
+		}
+	}
+
+	private void invokeOnChanged(Path directory) {
 		for (Consumer<Path> cb : _onChanged) {
 			cb.accept(directory);
+		}
+	}
+
+	private void invokeOnSelected(Path selected) {
+		for (Consumer<Path> cb : _onSelected) {
+			cb.accept(selected);
 		}
 	}
 
