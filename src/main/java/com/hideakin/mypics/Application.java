@@ -37,6 +37,7 @@ public class Application {
 				System.exit(1);
 			}
 		}
+		configuration.debug();
 		mainFrame.setPathToOpen(path);
 		SwingUtilities.invokeLater(() -> mainFrame.setVisible(true));
     }
