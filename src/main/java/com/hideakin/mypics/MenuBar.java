@@ -1,6 +1,5 @@
 package com.hideakin.mypics;
 
-import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -11,6 +10,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.MenuElement;
 
 public class MenuBar extends JMenuBar {
 
@@ -27,6 +27,7 @@ public class MenuBar extends JMenuBar {
 		public Menu(String label, int mnemonic) {
 			super(label);
 			setMnemonic(mnemonic);
+			setName(createName());
 		}
 
 		public JMenuItem addMenuItem(String label, int mnemonic, ActionListener al) {
@@ -44,6 +45,35 @@ public class MenuBar extends JMenuBar {
 			menuItem.setAccelerator(ks);
 			add(menuItem);
 			return menuItem;
+		}
+
+		@Override
+		public JMenuItem add(JMenuItem menuItem) {
+			menuItem.setName(createName(menuItem));
+			return super.add(menuItem);
+		}
+
+		private String createName() {
+			return createName(getText(), new StringBuilder());
+		}
+
+		private String createName(JMenuItem menuItem) {
+			return createName(menuItem.getText(), new StringBuilder(getName()));
+		}
+
+		private static String createName(String text, StringBuilder buf) {
+			int j = 0;
+			for (int i = 0; i < text.length(); i++) {
+				char c = text.charAt(i);
+				if (Character.isWhitespace(c)) {
+					j = 0;
+				} else if (j++ == 0) {
+					buf.append(Character.toUpperCase(c));
+				} else {
+					buf.append(c);
+				}
+			}
+			return buf.toString();
 		}
 
 	}
@@ -247,24 +277,59 @@ public class MenuBar extends JMenuBar {
 	}
 
 	public void update() {
-		JMenu fileMenu = getMenu(0);
-		int n = fileMenu.getMenuComponentCount();
-		for (int i = 0; i < n; i++) {
-			Component c = fileMenu.getMenuComponent(i);
-			if (c instanceof OpenDirectoryMenu menu) {
-				menu.build();
-				break;
+		((OpenDirectoryMenu)findMenuByName("FileOpenDirectory")).build();
+		((MoveFileMenu)findMenuByName("EditMoveFile")).build();
+	}
+
+	public void enablePath(boolean enabled) {
+		findMenuByName("EditMoveFile").setEnabled(enabled);
+		findMenuItemByName("EditCopyPath").setEnabled(enabled);
+		findMenuItemByName("EditMoveFile").setEnabled(enabled);
+		findMenuItemByName("EditDeleteFile").setEnabled(enabled);
+		findMenuItemByName("EditUndo").setEnabled(UndoManager.getInstance().numberOfUndoes() > 0);
+	}
+
+	public void enableImage(boolean enabled) {
+		findMenuItemByName("ViewRotateRight").setEnabled(enabled);
+		findMenuItemByName("ViewRotateLeft").setEnabled(enabled);
+	}
+
+	private JMenuItem findMenuItemByName(String name) {
+		return findMenuItemByName(this, name);
+	}
+
+	private static JMenuItem findMenuItemByName(MenuElement root, String name) {
+		if (root instanceof JMenuItem menuItem) {
+			if (name.equals(menuItem.getName())) {
+				return menuItem;
 			}
 		}
-		JMenu editMenu = getMenu(1);
-		n = editMenu.getMenuComponentCount();
-		for (int i = 0; i < n; i++) {
-			Component c = editMenu.getMenuComponent(i);
-			if (c instanceof MoveFileMenu menu) {
-				menu.build();
-				break;
+		for (MenuElement child : root.getSubElements()) {
+			JMenuItem found = findMenuItemByName(child, name);
+			if (found != null) {
+				return found;
 			}
 		}
+		return null;
+	}
+
+	private Menu findMenuByName(String name) {
+		return findMenuByName(this, name);
+	}
+
+	private static Menu findMenuByName(MenuElement root, String name) {
+		if (root instanceof Menu menu) {
+			if (name.equals(menu.getName())) {
+				return menu;
+			}
+		}
+		for (MenuElement child : root.getSubElements()) {
+			Menu found = findMenuByName(child, name);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
 	}
 
 }

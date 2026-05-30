@@ -144,6 +144,8 @@ public class MainFrame extends JFrame {
 		_listPane.onSelected(path -> {
 	    	Application.debug(3, "listPane.onSelected(%s)", path);
 			_imagePane.loadFrom(path);
+			_menuBar.enablePath(path != null);
+			_menuBar.enableImage(_imagePane.path() != null);
 		});
 
 		_imagePane.onChanged(pane -> {

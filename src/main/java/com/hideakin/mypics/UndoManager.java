@@ -62,6 +62,10 @@ public class UndoManager {
 		}
 	}
 
+	public synchronized int numberOfUndoes() {
+		return _records.size();
+	}
+
 	public synchronized void clearTrash() {
 		for (UndoRecord record : _trash) {
 			try {
