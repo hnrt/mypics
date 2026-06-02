@@ -308,7 +308,7 @@ public class MenuBar extends JMenuBar {
 		findMenuItemByName("EditCopyPath").setEnabled(enabled);
 		findMenuItemByName("EditMoveFile").setEnabled(enabled);
 		findMenuItemByName("EditDeleteFile").setEnabled(enabled);
-		findMenuItemByName("EditUndo").setEnabled(UndoManager.getInstance().numberOfUndoes() > 0);
+		findMenuItemByName("EditUndo").setEnabled(FileManager.getInstance().numberOfUndoes() > 0);
 	}
 
 	public void enableImage(boolean enabled) {

@@ -79,8 +79,8 @@ public class MainFrame extends JFrame {
 			public void windowClosing(WindowEvent e) {
 		    	Application.debug(3, "windowClosing");
 				Application.configuration.save();
-				UndoManager.getInstance().clear();
-				UndoManager.getInstance().clearTrash();
+				FileManager.getInstance().clear();
+				FileManager.getInstance().clearTrash();
 				System.exit(0);
 			}
 		});

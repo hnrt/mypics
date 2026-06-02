@@ -72,7 +72,7 @@ public class TrashDialog extends ModalDialog {
 
 	private TrashDialog() {
 		super("Trash (Select items to restore)");
-		UndoManager.getInstance()
+		FileManager.getInstance()
 			.trash()
 			.stream()
 			.sorted()
@@ -101,13 +101,13 @@ public class TrashDialog extends ModalDialog {
 	@Override
 	public void apply() {
 		int restored = 0;
-		UndoManager um = UndoManager.getInstance();
+		FileManager fm = FileManager.getInstance();
 		int n = _model.getSize();
 		for (int i = 0; i < n; i++) {
 			Item item = _model.getElementAt(i);
 			if (item.selected) {
 				try {
-					if (um.restore(item.path) != null) {
+					if (fm.restore(item.path) != null) {
 						restored++;
 					}
 				} catch (Exception e) {

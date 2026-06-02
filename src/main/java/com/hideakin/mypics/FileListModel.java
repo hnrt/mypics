@@ -14,7 +14,7 @@ public class FileListModel extends DefaultListModel<Path> {
 		return new FileListModel();
 	}
 
-	private final UndoManager _undoManager = UndoManager.getInstance();
+	private final FileManager _fileManager = FileManager.getInstance();
 
 	private FileListModel() {
 		super();
@@ -23,11 +23,11 @@ public class FileListModel extends DefaultListModel<Path> {
 	@Override
 	public void clear() {
 		super.clear();
-		_undoManager.clear();
+		_fileManager.clear();
 	}
 
 	public Path move(Path source, Path targetDirectory, Consumer<Exception> cb) {
-		Path processed = _undoManager.move(source, targetDirectory, cb);
+		Path processed = _fileManager.move(source, targetDirectory, cb);
 		if (processed != null) {
 			removeElement(processed);
 		}
@@ -35,7 +35,7 @@ public class FileListModel extends DefaultListModel<Path> {
 	}
 
 	public List<Path> move(List<Path> sourceFiles, Path targetDirectory, Consumer<Exception> cb) {
-		List<Path> processed = _undoManager.move(sourceFiles, targetDirectory, cb);
+		List<Path> processed = _fileManager.move(sourceFiles, targetDirectory, cb);
 		if (processed != null) {
 			for (Path source : processed) {
 				removeElement(source);
@@ -45,7 +45,7 @@ public class FileListModel extends DefaultListModel<Path> {
 	}
 
 	public Path remove(Path source, Consumer<Exception> cb) {
-		Path processed = _undoManager.remove(source, cb);
+		Path processed = _fileManager.remove(source, cb);
 		if (processed != null) {
 			removeElement(processed);
 		}
@@ -53,7 +53,7 @@ public class FileListModel extends DefaultListModel<Path> {
 	}
 
 	public List<Path> remove(List<Path> sourceFiles, Consumer<Exception> cb) {
-		List<Path> processed = _undoManager.remove(sourceFiles, cb);
+		List<Path> processed = _fileManager.remove(sourceFiles, cb);
 		if (processed != null) {
 			for (Path source : processed) {
 				removeElement(source);
@@ -63,7 +63,7 @@ public class FileListModel extends DefaultListModel<Path> {
 	}
 
 	public List<Path> undo(Consumer<Exception> cb) {
-		List<Path> processed = _undoManager.undo(cb);
+		List<Path> processed = _fileManager.undo(cb);
 		if (processed.size() > 1) {
 			processed = processed.stream().sorted().toList();
 		}

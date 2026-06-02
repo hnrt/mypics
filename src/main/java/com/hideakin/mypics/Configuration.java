@@ -21,6 +21,7 @@ public class Configuration {
 	public static final int NUMBER_OF_RECENT_DIRECTORIES = 10;
 	public static final int NUMBER_OF_DESTINATIONS = 10;
 	public static final Path DEFAULT_PATH = Paths.get(System.getProperty("user.home"), ".mypics");
+	public static final Path DEFAULT_TRASH_PATH = Paths.get(System.getProperty("user.home"), ".mypics.trash");
 
 	private static Configuration _singleton;
 
@@ -51,6 +52,7 @@ public class Configuration {
 		public int horizontalDividerLocation = DEFAULT_HORIZONTAL_DIVIDER_LOCATION;
 		public int listVerticalDividerLocation = DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION;
 		public boolean directoryFilterVisibility = true;
+		public Path trashDirectory = DEFAULT_TRASH_PATH;
 
 		public ConfigurationDocument() {
 			recent[0] = Path.of("").toAbsolutePath();
@@ -70,6 +72,7 @@ public class Configuration {
 			Application.debug(3, "ConfigurationDocument: horizontalDividerLocation=%d", horizontalDividerLocation);
 			Application.debug(3, "ConfigurationDocument: listVerticalDividerLocation=%d", listVerticalDividerLocation);
 			Application.debug(3, "ConfigurationDocument: filterDirectoryVisibility=%s", directoryFilterVisibility ? "true" : "false");
+			Application.debug(3, "ConfigurationDocument: trashDirectory=%s", trashDirectory);
 		}
 
 	}
@@ -269,6 +272,14 @@ public class Configuration {
 
 	public void setDirectoryFilterVisibility(boolean value) {
 		_document.directoryFilterVisibility = value;
+	}
+
+	public Path getTrashDirectory() {
+		return _document.trashDirectory;
+	}
+
+	public void setTrashDirectory(Path value) {
+		_document.trashDirectory = value;
 	}
 
 }
