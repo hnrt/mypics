@@ -13,12 +13,21 @@ public class MoveFileOperation implements Operation {
 		return new MoveFileOperation(source, targetDirectory);
 	}
 
+	public static MoveFileOperation of(Path source, Path targetDirectory, String fileName) {
+		return new MoveFileOperation(source, targetDirectory, fileName);
+	}
+
 	private Path _source;
 	private Path _target;
 
 	private MoveFileOperation(Path source, Path targetDirectory) {
 		_source = source;
 		_target = targetDirectory.resolve(source.getFileName());
+	}
+
+	private MoveFileOperation(Path source, Path targetDirectory, String fileName) {
+		_source = source;
+		_target = targetDirectory.resolve(fileName);
 	}
 
 	@Override

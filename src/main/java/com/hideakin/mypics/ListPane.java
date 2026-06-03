@@ -233,8 +233,14 @@ public class ListPane extends JSplitPane {
 		Application.configuration.setDirectoryFilterVisibility(show);
 	}
 
-	public void toggleDirectoryFilterTextFieldVisibility() {
+	public boolean toggleDirectoryFilterTextFieldVisibility() {
 		setDirectoryFilterTextFieldVisibility(!getDirectoryFilterTextFieldVisibility());
+		return getDirectoryFilterTextFieldVisibility();
+	}
+
+	public boolean toggleFileListCellRenderer() {
+		_fileList.setCellRenderer(Application.configuration.getFileListCellRenderer() ^ 1);
+		return Application.configuration.getFileListCellRenderer() != 0;
 	}
 
 	public void setDefaultSize() {

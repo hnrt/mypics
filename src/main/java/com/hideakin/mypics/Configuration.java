@@ -53,6 +53,7 @@ public class Configuration {
 		public int listVerticalDividerLocation = DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION;
 		public boolean directoryFilterVisibility = true;
 		public Path trashDirectory = DEFAULT_TRASH_PATH;
+		public int fileListCellRenderer = 0;
 
 		public ConfigurationDocument() {
 			recent[0] = Path.of("").toAbsolutePath();
@@ -73,6 +74,7 @@ public class Configuration {
 			Application.debug(3, "ConfigurationDocument: listVerticalDividerLocation=%d", listVerticalDividerLocation);
 			Application.debug(3, "ConfigurationDocument: filterDirectoryVisibility=%s", directoryFilterVisibility ? "true" : "false");
 			Application.debug(3, "ConfigurationDocument: trashDirectory=%s", trashDirectory);
+			Application.debug(3, "ConfigurationDocument: fileListCellRenderer=%d", fileListCellRenderer);
 		}
 
 	}
@@ -280,6 +282,14 @@ public class Configuration {
 
 	public void setTrashDirectory(Path value) {
 		_document.trashDirectory = value;
+	}
+
+	public int getFileListCellRenderer() {
+		return _document.fileListCellRenderer;
+	}
+
+	public void setFileListCellRenderer(int value) {
+		_document.fileListCellRenderer = value;
 	}
 
 }

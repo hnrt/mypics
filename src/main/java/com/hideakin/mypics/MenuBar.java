@@ -252,6 +252,9 @@ public class MenuBar extends JMenuBar {
 		Menu menu = createMenu("Edit", KeyEvent.VK_E);
 		menu.addMenuItem("Copy path", KeyEvent.VK_C, e -> Application.mainFrame.copyPathToClipboard());
 		menu.addSeparator();
+		menu.addMenuItem("Rename", KeyEvent.VK_R,
+				KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0),
+				e -> Application.mainFrame.listPane().fileList().startEditing());
 		menu.add(new MoveFileMenu("Move file", KeyEvent.VK_M));
 		menu.addMenuItem("Delete file", KeyEvent.VK_D, e -> Application.mainFrame.removeSelectedFile());
 		menu.addSeparator();
@@ -271,7 +274,8 @@ public class MenuBar extends JMenuBar {
 		menu.addMenuItem("Move destination...", KeyEvent.VK_M, e -> MoveDestinationDialog.create().showDialog());
 		menu.addMenuItem("Preferences...", KeyEvent.VK_P, e -> PreferencesDialog.create().showDialog());
 		menu.addSeparator();
-		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> Application.mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility());
+		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> findMenuItemByName("OptionsFilterDirectory").setSelected(Application.mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility()));
+		menu.addCheckBoxMenuItem("Thumbnail", KeyEvent.VK_T, e -> findMenuItemByName("OptionsThumbnail").setSelected(Application.mainFrame.listPane().toggleFileListCellRenderer()));
 		menu.addSeparator();
 		menu.addMenuItem("Default size", KeyEvent.VK_D, e -> Application.mainFrame.setDefaultSize());
 	}
@@ -301,6 +305,7 @@ public class MenuBar extends JMenuBar {
 		((OpenDirectoryMenu)findMenuByName("FileOpenDirectory")).build();
 		((MoveFileMenu)findMenuByName("EditMoveFile")).build();
 		findMenuItemByName("OptionsFilterDirectory").setSelected(Application.mainFrame.listPane().getDirectoryFilterTextFieldVisibility());
+		findMenuItemByName("OptionsThumbnail").setSelected(Application.configuration.getFileListCellRenderer() != 0);
 	}
 
 	public void enablePath(boolean enabled) {

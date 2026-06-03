@@ -1,5 +1,6 @@
 package com.hideakin.mypics;
 
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -135,6 +136,27 @@ public class FileManager {
 			}
 		}
 		return processedList;
+	}
+
+	public synchronized Path rename(Path source, String fileName, Consumer<Exception> cb) {
+		if (source != null && fileName != null && !fileName.equals(source.getFileName().toString())) {
+			Path directory = source.getParent();
+			Path target = directory.resolve(fileName);
+			if (Files.exists(target)) {
+				cb.accept(new FileAlreadyExistsException(target.toString()));
+			} else {
+				try {
+					MoveFileOperation mf = MoveFileOperation.of(source, directory, fileName);
+					mf.execute();
+					_operations.push(new OperationList(mf));
+					_canMoveLaterThan = System.currentTimeMillis() + _configuration.getMoveFileInterval();
+					return target;
+				} catch (Exception e) {
+					cb.accept(e);
+				}
+			}
+		}
+		return null;
 	}
 
 	public synchronized List<Path> undo(Consumer<Exception> cb) {

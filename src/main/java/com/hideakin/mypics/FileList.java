@@ -5,6 +5,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.List;
@@ -14,13 +15,19 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JList;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 
 public class FileList extends JList<Path> {
 
 	public static final int FIRST = 0;
 	public static final int LAST = -1;
 
+	public static final int SIMPLE_RENDERER = 0;
+	public static final int THUMBNAIL_RENDERER = 1;
+	
 	private static final long serialVersionUID = 5229274496231891006L;
 
 	public static FileList of(FileListModel model) {
@@ -39,13 +46,18 @@ public class FileList extends JList<Path> {
 	private static final String CTRL9 = "ctrl9";
 	private static final String DELETE = "delete";
 	private static final String UNDO = "undo";
+	private static final String EDIT = "edit";
 
+	private final ListCellRenderer<? super Path> _fileNameRenderer = new FileNameRenderer();
+	private final ListCellRenderer<Path> _thumbnailRenderer = new ThumbnailRenderer();
+	private final JTextField _editor = new JTextField();
+	private int _editingIndex = -1;
 	private final FileListModel _model;
 
 	private FileList(FileListModel model) {
 		super(model);
 		_model = model;
-		setCellRenderer(new FileNameRenderer());
+		setCellRenderer(Application.configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER ? _thumbnailRenderer : _fileNameRenderer);
 		InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), CTRL0);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), CTRL1);
@@ -59,6 +71,7 @@ public class FileList extends JList<Path> {
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK), CTRL9);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DELETE);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK), UNDO);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), EDIT);
         ActionMap am = getActionMap();
         am.put(CTRL0, new AbstractAction() {
             @Override
@@ -132,6 +145,34 @@ public class FileList extends JList<Path> {
             	undo();
             }
         });
+        am.put(EDIT, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                startEditing();
+            }
+        });
+        _editor.setVisible(false);
+		_editor.addActionListener(e -> finishEditing(true));
+		_editor.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					finishEditing(false);
+				}
+			}
+		});
+        add(_editor);
+	}
+
+	public void setCellRenderer(int renderer) {
+		Application.configuration.setFileListCellRenderer(renderer);
+		setCellRenderer(Application.configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER ? _thumbnailRenderer : _fileNameRenderer);
+		SwingUtilities.invokeLater(() -> {
+			int selected = getSelectedIndex();
+			if (selected > -1) {
+				ensureIndexIsVisible(selected);
+			}
+		});
 	}
 
 	public void select(Path path) {
@@ -197,5 +238,34 @@ public class FileList extends JList<Path> {
             clipboard.setContents(selection, null);
 		}
 	}
+
+	public void startEditing() {
+		_editingIndex = getSelectedIndex();
+		if (_editingIndex < 0) return;
+		java.awt.Rectangle cellBounds = getCellBounds(_editingIndex, _editingIndex);
+		if (cellBounds == null) return;
+		_editor.setText(_model.get(_editingIndex).getFileName().toString());
+		_editor.setBounds(cellBounds);
+		_editor.setVisible(true);
+		_editor.requestFocus();
+		_editor.selectAll();
+    }
+
+    private void finishEditing(boolean commit) {
+    	Path target = null;
+        if (_editingIndex >= 0 && commit) {
+        	String fileName = _editor.getText().trim();
+        	Path source = _model.get(_editingIndex);
+        	FileManager fm = FileManager.getInstance();
+        	target = fm.rename(source, fileName, e -> Application.mainFrame.showErrorDialog(e));
+        	if (target != null) {
+                _model.set(_editingIndex, target);
+        	}
+        }
+        _editor.setVisible(false);
+        _editingIndex = -1;
+        requestFocusInWindow();
+        select(target);
+    }
 
 }
