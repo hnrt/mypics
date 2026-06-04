@@ -17,7 +17,6 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 
 public class FileList extends JList<Path> {
@@ -48,8 +47,8 @@ public class FileList extends JList<Path> {
 	private static final String UNDO = "undo";
 	private static final String EDIT = "edit";
 
-	private final ListCellRenderer<? super Path> _fileNameRenderer = new FileNameRenderer();
-	private final ListCellRenderer<Path> _thumbnailRenderer = new ThumbnailRenderer();
+	private final FileNameRenderer _fileNameRenderer = new FileNameRenderer();
+	private final ThumbnailRenderer _thumbnailRenderer = new ThumbnailRenderer();
 	private final JTextField _editor = new JTextField();
 	private int _editingIndex = -1;
 	private final FileListModel _model;
@@ -173,6 +172,10 @@ public class FileList extends JList<Path> {
 				ensureIndexIsVisible(selected);
 			}
 		});
+	}
+
+	public void clearCache() {
+		_thumbnailRenderer.clearCache();
 	}
 
 	public void select(Path path) {

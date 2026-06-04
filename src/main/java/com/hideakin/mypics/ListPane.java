@@ -162,11 +162,14 @@ public class ListPane extends JSplitPane {
 			_fileListModel.clear();
 			_directoryListModel.clear();
 			_directoryListModel.addParentDirectory(directory);
+			_fileList.clearCache();
 			try {
 				Files.list(directory).sorted().forEach((e) -> {
 					if (Files.isDirectory(e)) {
+						Application.debug(3, "ListPane::loadFrom: D %s", e);
 						_directoryListModel.addElement(e);
 					} else if (Files.isRegularFile(e)) {
+						Application.debug(3, "ListPane::loadFrom: F %s", e);
 						_fileListModel.addElement(e);
 					}
 				});
