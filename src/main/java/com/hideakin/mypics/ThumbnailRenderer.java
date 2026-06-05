@@ -52,6 +52,7 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 	}
 
 	public void clearCache() {
+		Application.debug(3, "ThumbnailRenderer::clearCache");
 		_iconCache.clear();
 	}
 

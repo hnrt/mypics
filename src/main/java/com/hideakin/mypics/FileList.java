@@ -57,6 +57,7 @@ public class FileList extends JList<Path> {
 		super(model);
 		_model = model;
 		setCellRenderer(Application.configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER ? _thumbnailRenderer : _fileNameRenderer);
+		_model.onClear(() -> _thumbnailRenderer.clearCache());
 		InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), CTRL0);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), CTRL1);
@@ -172,10 +173,6 @@ public class FileList extends JList<Path> {
 				ensureIndexIsVisible(selected);
 			}
 		});
-	}
-
-	public void clearCache() {
-		_thumbnailRenderer.clearCache();
 	}
 
 	public void select(Path path) {

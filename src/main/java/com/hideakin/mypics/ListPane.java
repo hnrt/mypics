@@ -4,10 +4,12 @@ import java.awt.BorderLayout;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -104,32 +106,24 @@ public class ListPane extends JSplitPane {
 					if (_directoryFilterText == null) {
 						saveDirectoryListState(directory);
 					}
-					_directoryListModel.clear();
+					List<Path> entries = Files.list(directory).filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
 					if (text.length() == 0) {
+						List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
+						dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
+						_directoryListModel.clear();
 						_directoryListModel.addParentDirectory(directory);
-						try {
-							Files.list(directory).sorted().forEach((e) -> {
-								if (Files.isDirectory(e)) {
-									_directoryListModel.addElement(e);
-								}
-							});
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-						restoreDirectoryListState(directory);
+						_directoryListModel.addAll(dd);
 						_directoryFilterText = null;
+						restoreDirectoryListState(directory);
 					} else {
-						try {
-							Files.list(directory).sorted().forEach((e) -> {
-								if (Files.isDirectory(e) && e.getFileName().toString().toLowerCase().contains(text)) {
-									_directoryListModel.addElement(e);
-								}
-							});
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+						List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e) && e.getFileName().toString().toLowerCase().contains(text)).collect(Collectors.toList());
+						dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
+						_directoryListModel.clear();
+						_directoryListModel.addAll(dd);
 						_directoryFilterText = text;
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				} finally {
 					_internallyProcessing = false;
 				}
@@ -158,28 +152,23 @@ public class ListPane extends JSplitPane {
 			_directoryFilterTextField.setText("");
 			_directoryFilterText = null;
 			saveDirectoryListState(Application.configuration.getDirectory());
+			List<Path> entries = Files.list(directory).toList();
+			List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
+			List<Path> ff = entries.stream().filter(e -> Files.isRegularFile(e)).collect(Collectors.toList());
+			dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
+			ff.sort(Comparator.comparing(e -> e.getFileName().toString()));
 			Application.configuration.setDirectory(directory);
 			_fileListModel.clear();
 			_directoryListModel.clear();
 			_directoryListModel.addParentDirectory(directory);
-			_fileList.clearCache();
-			try {
-				Files.list(directory).sorted().forEach((e) -> {
-					if (Files.isDirectory(e)) {
-						Application.debug(3, "ListPane::loadFrom: D %s", e);
-						_directoryListModel.addElement(e);
-					} else if (Files.isRegularFile(e)) {
-						Application.debug(3, "ListPane::loadFrom: F %s", e);
-						_fileListModel.addElement(e);
-					}
-				});
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			_directoryListModel.addAll(dd);
+			_fileListModel.addAll(ff);
 			restoreDirectoryListState(directory);
 			invokeOnChanged(directory);
 			restoreFileListState(directory);
 			invokeOnSelected(_fileList.getSelectedValue());
+		} catch (Exception e) {
+			e.printStackTrace();
 		} finally {
 			_internallyProcessing = false;
 		}

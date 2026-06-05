@@ -1,6 +1,7 @@
 package com.hideakin.mypics;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -15,15 +16,23 @@ public class FileListModel extends DefaultListModel<Path> {
 	}
 
 	private final FileManager _fileManager = FileManager.getInstance();
+	private final List<Runnable> _onClear = new ArrayList<>();
 
 	private FileListModel() {
 		super();
+	}
+
+	public void onClear(Runnable cb) {
+		_onClear.add(cb);
 	}
 
 	@Override
 	public void clear() {
 		super.clear();
 		_fileManager.clear();
+		for (Runnable cb : _onClear) {
+			cb.run();
+		}
 	}
 
 	public Path move(Path source, Path targetDirectory, Consumer<Exception> cb) {
