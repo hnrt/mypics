@@ -70,11 +70,14 @@ public class MainFrame extends JFrame {
 		    	Application.debug(3, "windowOpened");
 		    	if (_pathToOpen == null) {
 		    		_listPane.loadFrom(configuration.getDirectory(), FileList.FIRST);
+					_menuBar.update();
 		    	} else if (Files.isDirectory(_pathToOpen)) {
 		    		_listPane.loadFrom(_pathToOpen.toAbsolutePath(), FileList.FIRST);
+					_menuBar.update();
 		    	} else if (Files.isRegularFile(_pathToOpen)) {
 		    		Path filePath = _pathToOpen.toAbsolutePath();
 		    		_listPane.loadFrom(filePath.getParent(), filePath);
+					_menuBar.update();
 		    	} else {
 		    		showErrorDialog(String.format("Unable to open\n%s", _pathToOpen));
 		    		close();
@@ -307,10 +310,12 @@ public class MainFrame extends JFrame {
 
 	public void removeFiles(List<Path> paths) {
 		_listPane.removeFiles(paths);
+		_menuBar.update();
 	}
 
 	public void addFiles(List<Path> paths) {
 		_listPane.addFiles(paths);
+		_menuBar.update();
 	}
 
 	public void startRenaming(BiFunction<Path, String, Path> cb) {

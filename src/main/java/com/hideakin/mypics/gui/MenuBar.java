@@ -17,10 +17,9 @@ import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.dialog.MoveDestinationDialog;
 import com.hideakin.mypics.gui.dialog.PreferencesDialog;
 import com.hideakin.mypics.gui.dialog.TrashDialog;
-import com.hideakin.mypics.io.FileManager;
-
 import static com.hideakin.mypics.Application.configuration;
 import static com.hideakin.mypics.Application.mainFrame;
+import static com.hideakin.mypics.Application.fileManager;
 
 public class MenuBar extends JMenuBar {
 
@@ -322,6 +321,7 @@ public class MenuBar extends JMenuBar {
 		((MoveFileMenu)findMenuByName("EditMoveFile")).build();
 		findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().getDirectoryFilterTextFieldVisibility());
 		findMenuItemByName("OptionsThumbnail").setSelected(configuration.getFileListCellRenderer() != 0);
+		findMenuItemByName("EditUndo").setEnabled(fileManager.numberOfUndoes() > 0);
 	}
 
 	public void enablePath(boolean enabled) {
@@ -329,7 +329,6 @@ public class MenuBar extends JMenuBar {
 		findMenuItemByName("EditCopyPath").setEnabled(enabled);
 		findMenuItemByName("EditMoveFile").setEnabled(enabled);
 		findMenuItemByName("EditDeleteFile").setEnabled(enabled);
-		findMenuItemByName("EditUndo").setEnabled(FileManager.getInstance().numberOfUndoes() > 0);
 	}
 
 	public void enableImage(boolean enabled) {
