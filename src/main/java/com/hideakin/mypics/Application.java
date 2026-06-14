@@ -1,9 +1,16 @@
 package com.hideakin.mypics;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
-
 import javax.swing.SwingUtilities;
+
+import com.hideakin.mypics.gui.MainFrame;
+import com.hideakin.mypics.gui.WorkInProgress;
+import com.hideakin.mypics.io.FileManager;
 
 public class Application {
 
@@ -17,7 +24,9 @@ public class Application {
 	}
 
 	public static final Configuration configuration = Configuration.getInstance();
+	public static final FileManager fileManager = FileManager.getInstance();
 	public static final MainFrame mainFrame = MainFrame.getInstance();
+	public static final WorkInProgress inProcessing = new WorkInProgress();
 
 	public static void main(String[] args) {
 		Path path = null;
@@ -61,6 +70,56 @@ public class Application {
 			}
 			System.err.printf("# %s\n", line);
 		}
+	}
+
+	public static void exit() {
+		mainFrame.close();
+	}
+
+	public static void copyPathToClipboard() {
+		inProcessing.run(() -> {
+			Path path = mainFrame.getSelectedFile();
+			if (path == null) return;
+			StringSelection selection = new StringSelection(path.toString());
+			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(selection, null);
+		});
+	}
+
+	public static void moveTo(int index) {
+		moveTo(configuration.getDestination(index));
+	}
+
+	public static void moveTo(Path targetDirectory) {
+		inProcessing.run(() -> {
+			if (targetDirectory == null) return;
+			List<Path> sourceFiles = mainFrame.getSelectedFiles();
+			if (sourceFiles == null || sourceFiles.size() == 0) return;
+			List<Path> processed = fileManager.move(sourceFiles, targetDirectory, e -> mainFrame.showErrorDialog(e));
+			mainFrame.removeFiles(processed);
+		});
+	}
+
+	public static void remove() {
+		inProcessing.run(() -> {
+			List<Path> sourceFiles = mainFrame.getSelectedFiles();
+			if (sourceFiles == null || sourceFiles.size() == 0) return;
+			List<Path> processed = fileManager.remove(sourceFiles, e -> mainFrame.showErrorDialog(e));
+			mainFrame.removeFiles(processed);
+		});
+	}
+
+	public static void undo() {
+		inProcessing.run(() -> {
+			List<Path> processed = fileManager.undo(e -> mainFrame.showErrorDialog(e));
+			mainFrame.addFiles(processed);
+		});
+	}
+
+	public static void startRenaming() {
+		mainFrame.startRenaming((source, fileName) -> {
+			return fileManager.rename(source, fileName, e -> mainFrame.showErrorDialog(e));
+		});
 	}
 
 }

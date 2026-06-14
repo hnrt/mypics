@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui.renderer;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -15,6 +15,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.UIManager;
+
+import com.hideakin.mypics.Application;
+import com.hideakin.mypics.gui.ImageLoader;
 
 public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> {
 

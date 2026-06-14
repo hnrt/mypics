@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.util;
 
 import java.util.ArrayList;
 

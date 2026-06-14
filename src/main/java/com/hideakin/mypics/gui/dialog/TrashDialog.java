@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -13,6 +13,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
+
+import com.hideakin.mypics.Application;
+import com.hideakin.mypics.io.FileManager;
 
 public class TrashDialog extends ModalDialog {
 

@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.util;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.UUID;
+
+import com.hideakin.mypics.Application;
 
 public class MoveFileOperation implements Operation {
 

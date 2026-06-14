@@ -1,9 +1,15 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui;
 
 import javax.swing.*;
 
+import com.hideakin.mypics.Application;
+import com.hideakin.mypics.Configuration;
+import com.hideakin.mypics.io.FileManager;
+
 import static com.hideakin.mypics.Application.ABOUT;
 import static com.hideakin.mypics.Application.VERSION;
+import static com.hideakin.mypics.Application.configuration;
+import static com.hideakin.mypics.Application.inProcessing;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -11,6 +17,8 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.BiFunction;
 
 public class MainFrame extends JFrame {
 
@@ -46,9 +54,9 @@ public class MainFrame extends JFrame {
 				_listPane,
 				_imagePane
 		);
-		_splitPane.setDividerLocation(Application.configuration.getHorizontalDividerLocation());
+		_splitPane.setDividerLocation(configuration.getHorizontalDividerLocation());
 		_splitPane.addPropertyChangeListener("dividerLocation", e -> {
-			Application.configuration.setHorizontalDividerLocation((int)e.getNewValue());
+			configuration.setHorizontalDividerLocation((int)e.getNewValue());
 		});
 		add(_splitPane, BorderLayout.CENTER);
 
@@ -61,15 +69,12 @@ public class MainFrame extends JFrame {
 		    public void windowOpened(WindowEvent e) {
 		    	Application.debug(3, "windowOpened");
 		    	if (_pathToOpen == null) {
-		    		_listPane.loadFrom(Application.configuration.getDirectory());
-		    		_listPane.fileList().select(FileList.FIRST);
+		    		_listPane.loadFrom(configuration.getDirectory(), FileList.FIRST);
 		    	} else if (Files.isDirectory(_pathToOpen)) {
-		    		_listPane.loadFrom(_pathToOpen.toAbsolutePath());
-		    		_listPane.fileList().select(FileList.FIRST);
+		    		_listPane.loadFrom(_pathToOpen.toAbsolutePath(), FileList.FIRST);
 		    	} else if (Files.isRegularFile(_pathToOpen)) {
 		    		Path filePath = _pathToOpen.toAbsolutePath();
-		    		_listPane.loadFrom(filePath.getParent());
-		    		_listPane.fileList().select(filePath);
+		    		_listPane.loadFrom(filePath.getParent(), filePath);
 		    	} else {
 		    		showErrorDialog(String.format("Unable to open\n%s", _pathToOpen));
 		    		close();
@@ -78,7 +83,7 @@ public class MainFrame extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 		    	Application.debug(3, "windowClosing");
-				Application.configuration.save();
+				configuration.save();
 				FileManager.getInstance().clear();
 				FileManager.getInstance().clearTrash();
 				System.exit(0);
@@ -92,7 +97,7 @@ public class MainFrame extends JFrame {
 				if ((state & (Frame.MAXIMIZED_BOTH | Frame.ICONIFIED)) == 0) {
 					int w = MainFrame.this.getWidth();
 					int h = MainFrame.this.getHeight();
-					Application.configuration.setWindowSize(w, h);
+					configuration.setWindowSize(w, h);
 				}
 			}
 		});
@@ -136,28 +141,29 @@ public class MainFrame extends JFrame {
 			}
 		});
 
-		_listPane.onChanged(path -> {
-	    	Application.debug(3, "listPane.onChanged(%s)", path);
+		_listPane.onDirectoryChanged(path -> {
+			Application.debug(3, "listPane.onDirectoryChanged(%s)", path);
 			setTitle(String.format("%s", path));
+			_listPane.loadFrom(path);
 			_menuBar.update();
 		});
-		_listPane.onSelected(path -> {
-	    	Application.debug(3, "listPane.onSelected(%s)", path);
+		_listPane.onFileSelected(path -> {
+			Application.debug(3, "listPane.onFileSelected(%s)", path);
 			_imagePane.loadFrom(path);
 			_menuBar.enablePath(path != null);
 			_menuBar.enableImage(_imagePane.path() != null);
 		});
 
 		_imagePane.onChanged(pane -> {
-	    	Application.debug(3, "imagePane.onChanged(%s)", pane.path());
+			Application.debug(3, "imagePane.onChanged(path=%s)", pane.path());
 			if (pane.path() == null) {
-				setTitle(String.format("%s", Application.configuration.getDirectory()));
+				setTitle(String.format("%s", configuration.getDirectory()));
 			} else {
 				setTitle(String.format("%s [%d%%]", pane.path(), (int)(pane.scale() * 100)));
 			}
 		});
 
-		setSize(Application.configuration.getWidth(), Application.configuration.getHeight());
+		setSize(configuration.getWidth(), configuration.getHeight());
 		setLocationRelativeTo(null);
 	}
 
@@ -179,7 +185,7 @@ public class MainFrame extends JFrame {
 	}
 
 	public void reloadDirectory() {
-		_listPane.loadFrom(Application.configuration.getDirectory());
+		_listPane.loadFrom(configuration.getDirectory());
 	}
 
 	public void loadDirectoryFrom(Path path) {
@@ -187,94 +193,89 @@ public class MainFrame extends JFrame {
 	}
 
 	public void loadDirectoryFrom(Path path, int index) {
-		_listPane.loadFrom(path);
-		_listPane.fileList().select(index);
+		_listPane.loadFrom(path, index);
 	}
 
 	public void loadPreviousSiblingDirectory() {
-		try {
-			Path current = Application.configuration.getDirectory();
-			Path parent = current.getParent();
-			Path target = Files.list(parent)
-					.filter(x -> Files.isDirectory(x))
-					.sorted(Comparator.reverseOrder())
-					.filter(x -> x.compareTo(current) < 0)
-					.findFirst()
-					.orElse(null);
-			if (target != null) {
-				loadDirectoryFrom(target, FileList.LAST);
+		inProcessing.run(() -> {
+			try {
+				Path current = configuration.getDirectory();
+				Path parent = current.getParent();
+				Path target = Files.list(parent)
+						.filter(x -> Files.isDirectory(x))
+						.sorted(Comparator.reverseOrder())
+						.filter(x -> x.compareTo(current) < 0)
+						.findFirst()
+						.orElse(null);
+				if (target != null) {
+					loadDirectoryFrom(target, FileList.LAST);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		});
 	}
 
 	public void loadNextSiblingDirectory() {
-		try {
-			Path current = Application.configuration.getDirectory();
-			Path parent = current.getParent();
-			Path target = Files.list(parent)
-					.filter(x -> Files.isDirectory(x))
-					.sorted()
-					.filter(x -> x.compareTo(current) > 0)
-					.findFirst()
-					.orElse(null);
-			if (target != null) {
-				loadDirectoryFrom(target, FileList.FIRST);
+		inProcessing.run(() -> {
+			try {
+				Path current = configuration.getDirectory();
+				Path parent = current.getParent();
+				Path target = Files.list(parent)
+						.filter(x -> Files.isDirectory(x))
+						.sorted()
+						.filter(x -> x.compareTo(current) > 0)
+						.findFirst()
+						.orElse(null);
+				if (target != null) {
+					loadDirectoryFrom(target, FileList.FIRST);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		});
 	}
 
 	public void loadParentDirectory() {
-		Path current = Application.configuration.getDirectory();
-		Path parent = current.getParent();
-		if (Files.exists(parent)) {
-			loadDirectoryFrom(parent);
-		}
+		inProcessing.run(() -> {
+			Path current = configuration.getDirectory();
+			Path parent = current.getParent();
+			if (Files.exists(parent)) {
+				loadDirectoryFrom(parent);
+			}
+		});
 	}
 
 	public void loadFirstSubdirectory() {
-		try {
-			Path current = Application.configuration.getDirectory();
-			Path target = Files.list(current)
-					.filter(x -> Files.isDirectory(x))
-					.sorted()
-					.findFirst()
-					.orElse(null);
-			if (target != null) {
-				loadDirectoryFrom(target);
+		inProcessing.run(() -> {
+			try {
+				Path current = configuration.getDirectory();
+				Path target = Files.list(current)
+						.filter(x -> Files.isDirectory(x))
+						.sorted()
+						.findFirst()
+						.orElse(null);
+				if (target != null) {
+					loadDirectoryFrom(target);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		});
 	}
 
 	public void loadImageFrom(Path path) {
-		Application.configuration.setDirectory(path.getParent());
-		_listPane.loadFrom(Application.configuration.getDirectory());
-		_listPane.fileList().select(path);
-	}
-
-	public void moveSelectedFileTo(Path path) {
-		_listPane.fileList().moveTo(path);
-	}
-
-	public void copyPathToClipboard() {
-		_listPane.fileList().copyPath();
-	}
-
-	public void removeSelectedFile() {
-		_listPane.fileList().remove();
-	}
-
-	public void undoEditOperation() {
-		_listPane.fileList().undo();
+		inProcessing.run(() -> {
+			configuration.setDirectory(path.getParent());
+			_listPane.loadFrom(configuration.getDirectory());
+			_listPane.fileList().select(path);
+		});
 	}
 
 	public void rotateImageByOrientation(int orientation) {
-		_imagePane.rotateByOrientation(orientation);
+		inProcessing.run(() -> {
+			_imagePane.rotateByOrientation(orientation);
+		});
 	}
 
 	public void showAboutDialog() {
@@ -296,13 +297,33 @@ public class MainFrame extends JFrame {
 		JOptionPane.showMessageDialog(this, text, "ERROR", JOptionPane.ERROR_MESSAGE);
 	}
 
+	public Path getSelectedFile() {
+		return _listPane.getSelectedFile();
+	}
+
+	public List<Path> getSelectedFiles() {
+		return _listPane.getSelectedFiles();
+	}
+
+	public void removeFiles(List<Path> paths) {
+		_listPane.removeFiles(paths);
+	}
+
+	public void addFiles(List<Path> paths) {
+		_listPane.addFiles(paths);
+	}
+
+	public void startRenaming(BiFunction<Path, String, Path> cb) {
+		_listPane.fileList().startRenaming(cb);
+	}
+
 	public void setDefaultSize() {
 		_listPane.setDefaultSize();
-		Application.configuration.setWidth(Configuration.DEFAULT_WIDTH);
-		Application.configuration.setHeight(Configuration.DEFAULT_HEIGHT);
-		Application.configuration.setHorizontalDividerLocation(Configuration.DEFAULT_HORIZONTAL_DIVIDER_LOCATION);
-		setSize(Application.configuration.getWidth(), Application.configuration.getHeight());
-		_splitPane.setDividerLocation(Application.configuration.getHorizontalDividerLocation());
+		configuration.setWidth(Configuration.DEFAULT_WIDTH);
+		configuration.setHeight(Configuration.DEFAULT_HEIGHT);
+		configuration.setHorizontalDividerLocation(Configuration.DEFAULT_HORIZONTAL_DIVIDER_LOCATION);
+		setSize(configuration.getWidth(), configuration.getHeight());
+		_splitPane.setDividerLocation(configuration.getHorizontalDividerLocation());
 	}
 
 }

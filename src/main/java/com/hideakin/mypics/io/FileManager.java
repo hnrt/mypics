@@ -1,6 +1,7 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.io;
 
 import java.nio.file.FileAlreadyExistsException;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -8,6 +9,12 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.function.Consumer;
+
+import com.hideakin.mypics.Configuration;
+import com.hideakin.mypics.util.MoveFileOperation;
+import com.hideakin.mypics.util.Operation;
+import com.hideakin.mypics.util.RemoveFileOperation;
+import com.hideakin.mypics.util.OperationList;
 
 public class FileManager {
 

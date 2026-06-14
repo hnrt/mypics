@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.io;
 
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;

@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -7,6 +7,8 @@ import java.awt.event.KeyEvent;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
+
+import com.hideakin.mypics.Application;
 
 public class ModalDialog extends JDialog {
 

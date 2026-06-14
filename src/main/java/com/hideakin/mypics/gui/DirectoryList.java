@@ -1,7 +1,10 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui;
 
 import java.nio.file.Path;
 import javax.swing.JList;
+
+import com.hideakin.mypics.gui.model.DirectoryListModel;
+import com.hideakin.mypics.gui.renderer.FileNameRenderer;
 
 public class DirectoryList extends JList<Path> {
 

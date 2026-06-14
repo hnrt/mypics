@@ -1,8 +1,10 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
+
+import com.hideakin.mypics.Application;
 
 public class RemoveFileOperation implements Operation {
 

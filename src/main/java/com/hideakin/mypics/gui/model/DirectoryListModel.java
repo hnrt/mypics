@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui.model;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

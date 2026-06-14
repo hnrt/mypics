@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui;
 
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -12,6 +12,15 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.MenuElement;
+
+import com.hideakin.mypics.Application;
+import com.hideakin.mypics.gui.dialog.MoveDestinationDialog;
+import com.hideakin.mypics.gui.dialog.PreferencesDialog;
+import com.hideakin.mypics.gui.dialog.TrashDialog;
+import com.hideakin.mypics.io.FileManager;
+
+import static com.hideakin.mypics.Application.configuration;
+import static com.hideakin.mypics.Application.mainFrame;
 
 public class MenuBar extends JMenuBar {
 
@@ -108,7 +117,7 @@ public class MenuBar extends JMenuBar {
 
 		private void build() {
 			removeAll();
-			Path[] directories = Application.configuration.getRecent();
+			Path[] directories = configuration.getRecent();
 			if (directories[1] != null) {
 				addMenuItem(label(directories, 1), KeyEvent.VK_1, e -> changeTo(1));
 			}
@@ -144,7 +153,7 @@ public class MenuBar extends JMenuBar {
 		}
 
 		private void changeTo(int index) {
-			Application.mainFrame.loadDirectoryFrom(Application.configuration.getRecent()[index]);
+			mainFrame.loadDirectoryFrom(configuration.getRecent()[index]);
 		}
 
 		private void browse() {
@@ -152,10 +161,10 @@ public class MenuBar extends JMenuBar {
 			chooser.setDialogTitle("Open directory...");
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(false);
-			chooser.setSelectedFile(Application.configuration.getDirectory().toFile());
+			chooser.setSelectedFile(configuration.getDirectory().toFile());
 			int result = chooser.showOpenDialog(Application.mainFrame);
 			if (result == JFileChooser.APPROVE_OPTION) {
-				Application.mainFrame.loadDirectoryFrom(chooser.getSelectedFile().toPath());
+				mainFrame.loadDirectoryFrom(chooser.getSelectedFile().toPath());
 			}
 		}
 
@@ -172,45 +181,54 @@ public class MenuBar extends JMenuBar {
 
 		private void build() {
 			removeAll();
-			Path[] directories = Application.configuration.getDestinations();
+			Path[] directories = configuration.getDestinations();
 			if (directories[0] != null) {
-				addMenuItem(label(directories, 0), KeyEvent.VK_0, KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), e -> moveTo(0));
+				addMenuItem(label(directories, 0), KeyEvent.VK_0, KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(0));
 			}
 			if (directories[1] != null) {
-				addMenuItem(label(directories, 1), KeyEvent.VK_1, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), e -> moveTo(1));
+				addMenuItem(label(directories, 1), KeyEvent.VK_1, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(1));
 			}
 			if (directories[2] != null) {
-				addMenuItem(label(directories, 2), KeyEvent.VK_2, KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK), e -> moveTo(2));
+				addMenuItem(label(directories, 2), KeyEvent.VK_2, KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(2));
 			}
 			if (directories[3] != null) {
-				addMenuItem(label(directories, 3), KeyEvent.VK_3, KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK), e -> moveTo(3));
+				addMenuItem(label(directories, 3), KeyEvent.VK_3, KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(3));
 			}
 			if (directories[4] != null) {
-				addMenuItem(label(directories, 4), KeyEvent.VK_4, KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK), e -> moveTo(4));
+				addMenuItem(label(directories, 4), KeyEvent.VK_4, KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(4));
 			}
 			if (directories[5] != null) {
-				addMenuItem(label(directories, 5), KeyEvent.VK_5, KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK), e -> moveTo(5));
+				addMenuItem(label(directories, 5), KeyEvent.VK_5, KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(5));
 			}
 			if (directories[6] != null) {
-				addMenuItem(label(directories, 6), KeyEvent.VK_6, KeyStroke.getKeyStroke(KeyEvent.VK_6, InputEvent.CTRL_DOWN_MASK), e -> moveTo(6));
+				addMenuItem(label(directories, 6), KeyEvent.VK_6, KeyStroke.getKeyStroke(KeyEvent.VK_6, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(6));
 			}
 			if (directories[7] != null) {
-				addMenuItem(label(directories, 7), KeyEvent.VK_7, KeyStroke.getKeyStroke(KeyEvent.VK_7, InputEvent.CTRL_DOWN_MASK), e -> moveTo(7));
+				addMenuItem(label(directories, 7), KeyEvent.VK_7, KeyStroke.getKeyStroke(KeyEvent.VK_7, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(7));
 			}
 			if (directories[8] != null) {
-				addMenuItem(label(directories, 8), KeyEvent.VK_8, KeyStroke.getKeyStroke(KeyEvent.VK_8, InputEvent.CTRL_DOWN_MASK), e -> moveTo(8));
+				addMenuItem(label(directories, 8), KeyEvent.VK_8, KeyStroke.getKeyStroke(KeyEvent.VK_8, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(8));
 			}
 			if (directories[9] != null) {
-				addMenuItem(label(directories, 9), KeyEvent.VK_9, KeyStroke.getKeyStroke(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK), e -> moveTo(9));
+				addMenuItem(label(directories, 9), KeyEvent.VK_9, KeyStroke.getKeyStroke(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK), e -> Application.moveTo(9));
 			}
+			addMenuItem("Browse...", KeyEvent.VK_B, e -> browse());
 		}
 
 		private String label(Path[] directories, int index) {
 			return String.format("%d %s", index, directories[index]);
 		}
 
-		private void moveTo(int index) {
-			Application.mainFrame.moveSelectedFileTo(Application.configuration.getDestination(index));
+		private void browse() {
+			JFileChooser chooser = new JFileChooser();
+			chooser.setDialogTitle("Move selected file(s) to...");
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			chooser.setAcceptAllFileFilterUsed(false);
+			chooser.setSelectedFile(configuration.getDirectory().toFile());
+			int result = chooser.showOpenDialog(Application.mainFrame);
+			if (result == JFileChooser.APPROVE_OPTION) {
+				Application.moveTo(chooser.getSelectedFile().toPath());
+			}
 		}
 
 	}
@@ -231,58 +249,56 @@ public class MenuBar extends JMenuBar {
 		menu.addSeparator();
 		menu.addMenuItem("Reload directory", KeyEvent.VK_R,
 				KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0),
-				e -> Application.mainFrame.reloadDirectory());
+				e -> mainFrame.reloadDirectory());
 		menu.addMenuItem("Load previous sibling directory", KeyEvent.VK_P,
 				KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK),
-				e -> Application.mainFrame.loadPreviousSiblingDirectory());
+				e -> mainFrame.loadPreviousSiblingDirectory());
 		menu.addMenuItem("Load next sibling directory", KeyEvent.VK_N,
 				KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK),
-				e -> Application.mainFrame.loadNextSiblingDirectory());
+				e -> mainFrame.loadNextSiblingDirectory());
 		menu.addMenuItem("Load parent directory", KeyEvent.VK_A,
 				KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK),
-				e -> Application.mainFrame.loadParentDirectory());
+				e -> mainFrame.loadParentDirectory());
 		menu.addMenuItem("Load first subdirectory", KeyEvent.VK_S,
 				KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK),
-				e -> Application.mainFrame.loadFirstSubdirectory());
+				e -> mainFrame.loadFirstSubdirectory());
 		menu.addSeparator();
-		menu.addMenuItem("Exit", KeyEvent.VK_X, e -> Application.mainFrame.close());
+		menu.addMenuItem("Exit", KeyEvent.VK_X, e -> Application.exit());
 	}
 
 	private void buildEditMenu() {
 		Menu menu = createMenu("Edit", KeyEvent.VK_E);
-		menu.addMenuItem("Copy path", KeyEvent.VK_C, e -> Application.mainFrame.copyPathToClipboard());
+		menu.addMenuItem("Copy path", KeyEvent.VK_C, e -> Application.copyPathToClipboard());
 		menu.addSeparator();
-		menu.addMenuItem("Rename", KeyEvent.VK_R,
-				KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0),
-				e -> Application.mainFrame.listPane().fileList().startEditing());
+		menu.addMenuItem("Rename", KeyEvent.VK_R, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), e -> Application.startRenaming());
 		menu.add(new MoveFileMenu("Move file", KeyEvent.VK_M));
-		menu.addMenuItem("Delete file", KeyEvent.VK_D, e -> Application.mainFrame.removeSelectedFile());
+		menu.addMenuItem("Delete file", KeyEvent.VK_D, e -> Application.remove());
 		menu.addSeparator();
-		menu.addMenuItem("Undo", KeyEvent.VK_U, e -> Application.mainFrame.undoEditOperation());
+		menu.addMenuItem("Undo", KeyEvent.VK_U, e -> Application.undo());
 		menu.addSeparator();
 		menu.addMenuItem("Trash...", KeyEvent.VK_T, e -> TrashDialog.create().showDialog());
 	}
 
 	private void buildViewMenu() {
 		Menu menu = createMenu("View", KeyEvent.VK_V);
-		menu.addMenuItem("Rotate right", KeyEvent.VK_R, e -> Application.mainFrame.rotateImageByOrientation(ImageLoader.ROTATE_90_DEGREES));
-		menu.addMenuItem("Rotate left", KeyEvent.VK_L, e -> Application.mainFrame.rotateImageByOrientation(ImageLoader.ROTATE_270_DEGREES));
+		menu.addMenuItem("Rotate right", KeyEvent.VK_R, e -> mainFrame.rotateImageByOrientation(ImageLoader.ROTATE_90_DEGREES));
+		menu.addMenuItem("Rotate left", KeyEvent.VK_L, e -> mainFrame.rotateImageByOrientation(ImageLoader.ROTATE_270_DEGREES));
 	}
 
 	private void buildOptionsMenu() {
 		Menu menu = createMenu("Options", KeyEvent.VK_O);
-		menu.addMenuItem("Move destination...", KeyEvent.VK_M, e -> MoveDestinationDialog.create().showDialog());
+		menu.addMenuItem("Move destinations...", KeyEvent.VK_M, e -> MoveDestinationDialog.create().showDialog());
 		menu.addMenuItem("Preferences...", KeyEvent.VK_P, e -> PreferencesDialog.create().showDialog());
 		menu.addSeparator();
-		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> findMenuItemByName("OptionsFilterDirectory").setSelected(Application.mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility()));
-		menu.addCheckBoxMenuItem("Thumbnail", KeyEvent.VK_T, e -> findMenuItemByName("OptionsThumbnail").setSelected(Application.mainFrame.listPane().toggleFileListCellRenderer()));
+		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility()));
+		menu.addCheckBoxMenuItem("Thumbnail", KeyEvent.VK_T, e -> findMenuItemByName("OptionsThumbnail").setSelected(mainFrame.listPane().toggleFileListCellRenderer()));
 		menu.addSeparator();
-		menu.addMenuItem("Default size", KeyEvent.VK_D, e -> Application.mainFrame.setDefaultSize());
+		menu.addMenuItem("Default size", KeyEvent.VK_D, e -> mainFrame.setDefaultSize());
 	}
 
 	private void buildHelpMenu() {
 		Menu menu = createMenu("Help", KeyEvent.VK_H);
-		menu.addMenuItem("About...", KeyEvent.VK_A, e -> Application.mainFrame.showAboutDialog());
+		menu.addMenuItem("About...", KeyEvent.VK_A, e -> mainFrame.showAboutDialog());
 	}
 
 	private Menu createMenu(String label, int mnemonic) {
@@ -294,18 +310,18 @@ public class MenuBar extends JMenuBar {
 	private void openFile() {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Open image file...");
-	   	chooser.setCurrentDirectory(Application.configuration.getDirectory().toFile());
+	   	chooser.setCurrentDirectory(configuration.getDirectory().toFile());
 		int result = chooser.showOpenDialog(Application.mainFrame);
 		if (result == JFileChooser.APPROVE_OPTION) {
-			Application.mainFrame.loadImageFrom(chooser.getSelectedFile().toPath());
+			mainFrame.loadImageFrom(chooser.getSelectedFile().toPath());
 		}
 	}
 
 	public void update() {
 		((OpenDirectoryMenu)findMenuByName("FileOpenDirectory")).build();
 		((MoveFileMenu)findMenuByName("EditMoveFile")).build();
-		findMenuItemByName("OptionsFilterDirectory").setSelected(Application.mainFrame.listPane().getDirectoryFilterTextFieldVisibility());
-		findMenuItemByName("OptionsThumbnail").setSelected(Application.configuration.getFileListCellRenderer() != 0);
+		findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().getDirectoryFilterTextFieldVisibility());
+		findMenuItemByName("OptionsThumbnail").setSelected(configuration.getFileListCellRenderer() != 0);
 	}
 
 	public void enablePath(boolean enabled) {

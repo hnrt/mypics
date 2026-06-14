@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Metadata;

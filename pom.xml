@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.hideakin</groupId>
   <artifactId>mypics</artifactId>
-  <version>1.23.0</version>
+  <version>1.24.0</version>
   <name>Image Viewer</name>
   <description>supports JPEG / PNG / GIF still images.</description>
   <properties>

@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui.renderer;
 
 import java.awt.Component;
 import java.nio.file.Path;

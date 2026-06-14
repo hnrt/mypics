@@ -1,14 +1,11 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.function.BiFunction;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -18,6 +15,11 @@ import javax.swing.JList;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+
+import com.hideakin.mypics.Application;
+import com.hideakin.mypics.gui.model.FileListModel;
+import com.hideakin.mypics.gui.renderer.FileNameRenderer;
+import com.hideakin.mypics.gui.renderer.ThumbnailRenderer;
 
 public class FileList extends JList<Path> {
 
@@ -51,6 +53,7 @@ public class FileList extends JList<Path> {
 	private final ThumbnailRenderer _thumbnailRenderer = new ThumbnailRenderer();
 	private final JTextField _editor = new JTextField();
 	private int _editingIndex = -1;
+	private BiFunction<Path, String, Path> _onCommitRenaming;
 	private final FileListModel _model;
 
 	private FileList(FileListModel model) {
@@ -76,88 +79,88 @@ public class FileList extends JList<Path> {
         am.put(CTRL0, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(0);
+            	Application.moveTo(0);
             }
         });
         am.put(CTRL1, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(1);
+            	Application.moveTo(1);
             }
         });
         am.put(CTRL2, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(2);
+            	Application.moveTo(2);
             }
         });
         am.put(CTRL3, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(3);
+            	Application.moveTo(3);
             }
         });
         am.put(CTRL4, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(4);
+            	Application.moveTo(4);
             }
         });
         am.put(CTRL5, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(5);
+            	Application.moveTo(5);
             }
         });
         am.put(CTRL6, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(6);
+            	Application.moveTo(6);
             }
         });
         am.put(CTRL7, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(7);
+            	Application.moveTo(7);
             }
         });
         am.put(CTRL8, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(8);
+            	Application.moveTo(8);
             }
         });
         am.put(CTRL9, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	moveTo(9);
+            	Application.moveTo(9);
             }
         });
         am.put(DELETE, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	remove();
+            	Application.remove();
             }
         });
         am.put(UNDO, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	undo();
+            	Application.undo();
             }
         });
         am.put(EDIT, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                startEditing();
+            	Application.startRenaming();
             }
         });
         _editor.setVisible(false);
-		_editor.addActionListener(e -> finishEditing(true));
+		_editor.addActionListener(e -> finishRenaming(true));
 		_editor.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-					finishEditing(false);
+					finishRenaming(false);
 				}
 			}
 		});
@@ -177,7 +180,7 @@ public class FileList extends JList<Path> {
 
 	public void select(Path path) {
 		setSelectedValue(path, true);
-		requestFocusInWindow();
+		SwingUtilities.invokeLater(() -> requestFocusInWindow());
 	}
 
 	public void select(int index) {
@@ -194,52 +197,10 @@ public class FileList extends JList<Path> {
 		}
 		setSelectedIndex(index);
 		ensureIndexIsVisible(index);
-		requestFocusInWindow();
+		SwingUtilities.invokeLater(() -> requestFocusInWindow());
 	}
 
-	private void moveTo(int index) {
-		moveTo(Application.configuration.getDestination(index));
-	}
-
-	public void moveTo(Path destination) {
-		List<Path> selected = getSelectedValuesList();
-		if (selected != null && selected.size() > 0) {
-			int selectedIndex = getSelectionModel().getMinSelectionIndex();
-			clearSelection();
-			_model.move(selected, destination, e -> Application.mainFrame.showErrorDialog(e));
-			select(selectedIndex);
-		}
-	}
-
-	public void remove() {
-		List<Path> selected = getSelectedValuesList();
-		if (selected != null && selected.size() > 0) {
-			int selectedIndex = getSelectionModel().getMinSelectionIndex();
-			clearSelection();
-			_model.remove(selected, e -> Application.mainFrame.showErrorDialog(e));
-			select(selectedIndex);
-		}
-	}
-
-	public void undo() {
-		Path selected = getSelectedValue();
-		clearSelection();
-		_model.undo(e -> Application.mainFrame.showErrorDialog(e));
-		if (selected != null) {
-			select(selected);
-		}
-	}
-
-	public void copyPath() {
-		Path selected = getSelectedValue();
-		if (selected != null) {
-			StringSelection selection = new StringSelection(selected.toString());
-			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            clipboard.setContents(selection, null);
-		}
-	}
-
-	public void startEditing() {
+	public void startRenaming(BiFunction<Path, String, Path> cb) {
 		_editingIndex = getSelectedIndex();
 		if (_editingIndex < 0) return;
 		java.awt.Rectangle cellBounds = getCellBounds(_editingIndex, _editingIndex);
@@ -249,22 +210,21 @@ public class FileList extends JList<Path> {
 		_editor.setVisible(true);
 		_editor.requestFocus();
 		_editor.selectAll();
+		_onCommitRenaming = cb;
     }
 
-    private void finishEditing(boolean commit) {
+    private void finishRenaming(boolean commit) {
     	Path target = null;
         if (_editingIndex >= 0 && commit) {
         	String fileName = _editor.getText().trim();
         	Path source = _model.get(_editingIndex);
-        	FileManager fm = FileManager.getInstance();
-        	target = fm.rename(source, fileName, e -> Application.mainFrame.showErrorDialog(e));
+        	target = _onCommitRenaming.apply(source, fileName);
         	if (target != null) {
                 _model.set(_editingIndex, target);
         	}
         }
         _editor.setVisible(false);
         _editingIndex = -1;
-        requestFocusInWindow();
         select(target);
     }
 

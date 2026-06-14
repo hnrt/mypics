@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -10,6 +10,10 @@ import java.util.function.Consumer;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+
+import com.hideakin.mypics.Application;
+import com.hideakin.mypics.Configuration;
+import com.hideakin.mypics.util.function.ConsumerList;
 
 public class ImagePane extends JScrollPane {
 
@@ -42,7 +46,7 @@ public class ImagePane extends JScrollPane {
 	private BufferedImage _processedImage;
 	private Path _imagePath;
     private double _scale = 1.0;
-    private Consumer<ImagePane> _onChanged = pane -> {};
+    private ConsumerList<ImagePane> _onChanged = new ConsumerList<>();
 
 	private ImagePane() {
 		super();
@@ -70,17 +74,18 @@ public class ImagePane extends JScrollPane {
 	}
 
 	public void onChanged(Consumer<ImagePane> callback) {
-		_onChanged = callback;
+		_onChanged.add(callback);
 	}
 
 	public void clear() {
 		_imagePath = null;
 		_scale = 1.0;
 		_imageLabel.setIcon(null);
-		_onChanged.accept(this);
+		_onChanged.invoke(this);
     }
 
     public void loadFrom(Path path) {
+    	Application.debug(3, "ImagePane::loadFrom(%s)", path);
     	if (path == null) {
     		clear();
     		return;
@@ -89,18 +94,18 @@ public class ImagePane extends JScrollPane {
     		Record record = getRecord(path);
     		_processedImage = record.image;
     		if (_processedImage == null) {
-        		clear();
-        		return;
+    			clear();
+    			return;
     		}
     		_imagePath = path;
     		ImageIcon icon = new ImageIcon(_processedImage);
     		_originalImage = icon.getImage();
     		updateImage(computeImageSize(_configuration.getScalingMode()));
     		_imageLabel.setText(null);
-		} catch (Exception e) {
-			e.printStackTrace();
+    	} catch (Exception e) {
+    		e.printStackTrace();
     		_imageLabel.setIcon(null);
-		}
+    	}
     }
 
     public void redraw() {
@@ -156,7 +161,7 @@ public class ImagePane extends JScrollPane {
         Image scaled = _originalImage.getScaledInstance(rect.width(), rect.height(), Image.SCALE_SMOOTH);
         _imageLabel.setIcon(new ImageIcon(scaled));
         _imageLabel.revalidate();
-		_onChanged.accept(this);
+		_onChanged.invoke(this);
     }
 
     private static final int INITIAL_CAPACITY = 1024;

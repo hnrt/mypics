@@ -1,6 +1,9 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui.dialog;
 
 import javax.swing.*;
+
+import com.hideakin.mypics.Application;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.nio.file.Path;

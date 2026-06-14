@@ -1,4 +1,4 @@
-package com.hideakin.mypics;
+package com.hideakin.mypics.gui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -8,6 +8,9 @@ import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+
+import com.hideakin.mypics.Application;
+import com.hideakin.mypics.gui.ScalingMode;
 
 public class PreferencesDialog extends ModalDialog {
 
