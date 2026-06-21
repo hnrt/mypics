@@ -255,6 +255,7 @@ public class ListPane extends JSplitPane {
 			_fileList.clearSelection();
 			_fileListModel.removeElements(paths);
 			_fileList.select(index);
+			_onFileSelected.invoke(_fileList.getSelectedValue());
 		} else {
 			_fileListModel.removeElements(paths);
 		}
