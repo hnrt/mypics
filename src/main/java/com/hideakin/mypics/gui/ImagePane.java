@@ -2,6 +2,7 @@ package com.hideakin.mypics.gui;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.Rectangle;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,8 +13,10 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 
 import com.hideakin.mypics.Application;
-import com.hideakin.mypics.Configuration;
+import com.hideakin.mypics.gui.util.ImageLoader;
 import com.hideakin.mypics.util.function.ConsumerList;
+
+import static com.hideakin.mypics.Application.configuration;
 
 public class ImagePane extends JScrollPane {
 
@@ -39,8 +42,6 @@ public class ImagePane extends JScrollPane {
 		return new ImagePane();
 	}
 
-	private final Configuration _configuration = Configuration.getInstance();
-
 	private JLabel _imageLabel;
 	private Image _originalImage;
 	private BufferedImage _processedImage;
@@ -61,7 +62,7 @@ public class ImagePane extends JScrollPane {
             } else {
                 _scale /= 1.1; // zoom out
             }
-            updateImage(computeImageSize(ScalingMode.DO_NOT_CARE));
+            updateImage(ImageLoader.computeSizeByScale(_originalImage, _scale));
         });
 	}
 
@@ -100,7 +101,7 @@ public class ImagePane extends JScrollPane {
     		_imagePath = path;
     		ImageIcon icon = new ImageIcon(_processedImage);
     		_originalImage = icon.getImage();
-    		updateImage(computeImageSize(_configuration.getScalingMode()));
+    		updateImage(computeImageSize());
     		_imageLabel.setText(null);
     	} catch (Exception e) {
     		e.printStackTrace();
@@ -110,7 +111,7 @@ public class ImagePane extends JScrollPane {
 
     public void redraw() {
     	if (_imagePath == null) return;
-    	updateImage(computeImageSize(_configuration.getScalingMode()));
+		updateImage(computeImageSize());
     }
 
     public void rotateByOrientation(int orientation) {
@@ -120,45 +121,16 @@ public class ImagePane extends JScrollPane {
     	_processedImage = record.image;
 		ImageIcon icon = new ImageIcon(_processedImage);
 		_originalImage = icon.getImage();
-		updateImage(computeImageSize(_configuration.getScalingMode()));
+		updateImage(computeImageSize());
     }
 
-    private Rectangle computeImageSize(ScalingMode mode) {
-		int ow = _originalImage.getWidth(null);
-		int oh = _originalImage.getHeight(null);
-    	if (mode == ScalingMode.FIT_TO_WINDOW) {
-    		int pw = getWidth();
-    		int ph = getHeight();
-    		double scaleW = 1.0, scaleH = 1.0;
-    		if (pw < ow) {
-    			scaleW = 0.97 * pw / ow;
-    		}
-    		if (ph < oh) {
-    			scaleH = 0.97 * ph / oh;
-    		}
-    		_scale = Math.min(scaleW, scaleH);
-    	} else if (mode == ScalingMode.FIT_TO_WINDOW_WIDTH) {
-    		int pw = getWidth();
-    		if (pw < ow) {
-    			_scale = 0.97 * pw / ow;
-    		} else {
-    			_scale = 1.0;
-    		}
-    	} else if (mode == ScalingMode.FIT_TO_WINDOW_HEIGHT) {
-    		int ph = getHeight();
-    		if (ph < oh) {
-    			_scale = 0.97 * ph / oh;
-    		} else {
-    			_scale = 1.0;
-    		}
-    	} else if (mode == ScalingMode.RATIO) {
-    		_scale = _configuration.getScale();
-    	}
-        return new Rectangle(ow, oh, _scale);
+    private Rectangle computeImageSize() {
+		_scale = ImageLoader.computeScale(_originalImage, configuration.getScalingMode(), this);
+		return ImageLoader.computeSizeByScale(_originalImage, _scale);
     }
 
     private void updateImage(Rectangle rect) {
-        Image scaled = _originalImage.getScaledInstance(rect.width(), rect.height(), Image.SCALE_SMOOTH);
+        Image scaled = _originalImage.getScaledInstance(rect.width, rect.height, Image.SCALE_SMOOTH);
         _imageLabel.setIcon(new ImageIcon(scaled));
         _imageLabel.revalidate();
 		_onChanged.invoke(this);

@@ -1,4 +1,4 @@
-package com.hideakin.mypics.gui;
+package com.hideakin.mypics.gui.util;
 
 public enum ScalingMode {
 

@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
 import com.hideakin.mypics.Application;
-import com.hideakin.mypics.gui.ScalingMode;
+import com.hideakin.mypics.gui.util.ScalingMode;
 
 public class PreferencesDialog extends ModalDialog {
 

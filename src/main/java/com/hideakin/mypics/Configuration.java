@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.hideakin.mypics.gui.ScalingMode;
+import com.hideakin.mypics.gui.util.ScalingMode;
 import com.hideakin.mypics.io.Locker;
 
 public class Configuration {

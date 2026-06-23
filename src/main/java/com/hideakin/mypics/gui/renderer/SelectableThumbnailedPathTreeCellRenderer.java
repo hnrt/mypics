@@ -1,0 +1,57 @@
+package com.hideakin.mypics.gui.renderer;
+
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.nio.file.Path;
+import java.util.Map;
+
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreeCellRenderer;
+
+import com.hideakin.mypics.gui.util.Thumbnail;
+import com.hideakin.mypics.model.SelectablePath;
+
+public class SelectableThumbnailedPathTreeCellRenderer extends JPanel implements TreeCellRenderer {
+
+	private static final long serialVersionUID = 3133358982411475698L;
+
+	private final Map<Path, Icon> _icons;
+	private final JCheckBox _checkBox = new JCheckBox();
+	private final JLabel _thumbnail = new JLabel();
+	private final JLabel _label = new JLabel();
+	private final DefaultTreeCellRenderer _defaultRenderer = new DefaultTreeCellRenderer();
+
+	public SelectableThumbnailedPathTreeCellRenderer(Map<Path, Icon> icons) {
+		super();
+		_icons = icons;
+		setLayout(new FlowLayout(FlowLayout.LEFT, 3, 0));
+		add(_checkBox);
+		add(_thumbnail);
+		add(_label);
+		setOpaque(false);
+		_checkBox.setOpaque(false);
+		_thumbnail.setOpaque(false);
+		_label.setOpaque(false);
+	}
+
+	@Override
+	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+		DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+		Object obj = node.getUserObject();
+		if (obj instanceof SelectablePath child) {
+			_checkBox.setSelected(child.selected());
+			_thumbnail.setIcon(Thumbnail.of(child.path(), _icons));
+			_label.setText(child.path().toString());
+			return this;
+		} else {
+			return _defaultRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+		}
+	}
+
+}

@@ -46,6 +46,7 @@ public class Application {
 				System.exit(1);
 			}
 		}
+		debug(3, "Max heap = %d MB", Runtime.getRuntime().maxMemory() / 1024 / 1024);
 		configuration.debug();
 		mainFrame.setPathToOpen(path);
 		SwingUtilities.invokeLater(() -> mainFrame.setVisible(true));

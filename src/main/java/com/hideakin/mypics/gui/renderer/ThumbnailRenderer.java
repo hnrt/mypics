@@ -2,22 +2,18 @@ package com.hideakin.mypics.gui.renderer;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
-import javax.swing.UIManager;
 
 import com.hideakin.mypics.Application;
-import com.hideakin.mypics.gui.ImageLoader;
+import com.hideakin.mypics.gui.util.Thumbnail;
 
 public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> {
 
@@ -41,7 +37,7 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 			boolean isSelected,
 			boolean cellHasFocus) {
 		_nameLabel.setText(value.getFileName().toString());
-		Icon icon = createThumbnail(value);
+		Icon icon = Thumbnail.of(value, _iconCache);
 		_iconLabel.setIcon(icon);
 		if (isSelected) {
 			setBackground(list.getSelectionBackground());
@@ -57,41 +53,6 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 	public void clearCache() {
 		Application.debug(3, "ThumbnailRenderer::clearCache");
 		_iconCache.clear();
-	}
-
-	private Icon createThumbnail(Path path) {
-		Icon icon = _iconCache.get(path);
-		if (icon != null) {
-			return icon;
-		}
-		try {
-			BufferedImage original = ImageLoader.loadCorrectedImage(path.toFile());
-			if (original != null) {
-				double ow = original.getWidth();
-				double oh = original.getHeight();
-				double sw = 50.0;
-				double sh = 50.0;
-				if (ow > oh) {
-					sh = sw * oh / ow;
-				} else if (ow < oh){
-					sw = sh * ow / oh;
-				}
-				Application.debug(2, "createThumbnail: %dx%d %s", (int)sw, (int)sh, path);
-				Image scaled = original.getScaledInstance((int)sw, (int)sh, Image.SCALE_SMOOTH);
-				icon = new ImageIcon(scaled);
-			} else {
-				icon = getDefaultIcon();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			icon = getDefaultIcon();
-		}
-		_iconCache.put(path, icon);
-		return icon;
-	}
-
-	private Icon getDefaultIcon() {
-		return UIManager.getIcon("FileView.fileIcon");
 	}
 
 }
