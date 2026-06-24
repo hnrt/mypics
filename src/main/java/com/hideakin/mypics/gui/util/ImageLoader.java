@@ -25,23 +25,21 @@ public class ImageLoader {
 	public static final int ROTATE_270_DEGREES = 8;
 
 	public static BufferedImage loadCorrectedImage(File file) throws Exception {
-
 		BufferedImage img = ImageIO.read(file);
         if (img == null) {
         	return null;
         }
-
         return loadCorrectedImage(file, img);
 	}
 
-	public static BufferedImage loadCorrectedImageBySubsumpling(File file, int sourceSubsampling) throws Exception {
+	public static BufferedImage loadCorrectedImageBySubsampling(File file, int sourceSubsampling) throws Exception {
 		try (ImageInputStream iis = ImageIO.createImageInputStream(file)) {
 			Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
 			ImageReader reader = readers.next();
 			reader.setInput(iis);
 			ImageReadParam param = reader.getDefaultReadParam();
 			param.setSourceSubsampling(sourceSubsampling, sourceSubsampling, 0, 0);
-			BufferedImage img =reader.read(0, param);
+			BufferedImage img = reader.read(0, param);
 	        if (img == null) {
 	        	return null;
 	        }
@@ -50,25 +48,20 @@ public class ImageLoader {
 	}
 
 	public static BufferedImage loadCorrectedImage(File file, BufferedImage img) throws Exception {
-
         Metadata metadata = ImageMetadataReader.readMetadata(file);
         ExifIFD0Directory dir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
-
         int orientation = 1;
         if (dir != null && dir.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
             orientation = dir.getInt(ExifIFD0Directory.TAG_ORIENTATION);
         }
-
         return rotateByOrientation(img, orientation);
     }
 
     public static BufferedImage rotateByOrientation(BufferedImage img, int orientation) {
+        BufferedImage rotated;
         int w = img.getWidth();
         int h = img.getHeight();
-        BufferedImage rotated = img;
-
         AffineTransform transform = new AffineTransform();
-
         switch (orientation) {
             case 6: // 90 degrees CW
                 rotated = new BufferedImage(h, w, img.getType());
@@ -88,12 +81,10 @@ public class ImageLoader {
             default:
                 return img;
         }
-
         Graphics2D g = rotated.createGraphics();
         g.setTransform(transform);
         g.drawImage(img, 0, 0, null);
         g.dispose();
-
         return rotated;
     }
 

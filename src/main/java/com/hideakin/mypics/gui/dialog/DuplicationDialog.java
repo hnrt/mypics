@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 import javax.swing.JScrollPane;
@@ -59,8 +61,12 @@ public class DuplicationDialog extends ModalDialog {
 		getContentPane().setLayout(new BorderLayout());
 		add(_splitPane, BorderLayout.CENTER);
 		try {
-			Files.list(configuration.getDirectory()).filter(e -> Files.isDirectory(e)).forEach(e ->
-				_dRoot.add(new DefaultMutableTreeNode(new SelectablePath(e, false))));
+			List<Path> entries = Files.list(configuration.getDirectory()).toList();
+			List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
+			dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
+			for (Path path : dd) {
+				_dRoot.add(new DefaultMutableTreeNode(new SelectablePath(path, false)));
+			}
 			DefaultTreeModel model = (DefaultTreeModel)_dTree.getModel();
 			model.reload();
 		} catch (Exception e) {

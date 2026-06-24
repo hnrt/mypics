@@ -3,6 +3,7 @@ package com.hideakin.mypics.gui.util;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -29,7 +30,11 @@ public class Thumbnail {
 			return icon;
 		}
 		try {
-			BufferedImage original =ImageLoader.loadCorrectedImageBySubsumpling(path.toFile(), 16);
+			long fileSize = Files.size(path);
+			int subsampling = fileSize <= 65536 ? 1 : fileSize <= 262144 ? 2 : fileSize <= 1048576 ? 4 : fileSize <= 4194304 ? 8 : 16;
+			BufferedImage original = subsampling > 1
+					? ImageLoader.loadCorrectedImageBySubsampling(path.toFile(), subsampling)
+					: ImageLoader.loadCorrectedImage(path.toFile());
 			if (original != null) {
 				double ow = original.getWidth();
 				double oh = original.getHeight();
@@ -40,7 +45,7 @@ public class Thumbnail {
 				} else if (ow < oh){
 					sw = sh * ow / oh;
 				}
-				debug(3, "createThumbnail: %dx%d %s", (int)sw, (int)sh, path);
+				debug(3, "createThumbnail: %d %dx%d %s", subsampling, (int)sw, (int)sh, path);
 				Image scaled = original.getScaledInstance((int)sw, (int)sh, Image.SCALE_SMOOTH);
 				BufferedImage rgb = new BufferedImage((int)sw, (int)sh, BufferedImage.TYPE_INT_RGB);
 			    Graphics2D g = rgb.createGraphics();
