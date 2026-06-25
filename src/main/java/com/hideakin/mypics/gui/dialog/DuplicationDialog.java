@@ -1,7 +1,11 @@
 package com.hideakin.mypics.gui.dialog;
 
 import java.awt.BorderLayout;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,10 +17,17 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -27,6 +38,8 @@ import com.hideakin.mypics.gui.renderer.SelectablePathTreeCellEditor;
 import com.hideakin.mypics.gui.renderer.SelectablePathTreeCellRenderer;
 import com.hideakin.mypics.gui.renderer.SelectableThumbnailedPathTreeCellEditor;
 import com.hideakin.mypics.gui.renderer.SelectableThumbnailedPathTreeCellRenderer;
+import com.hideakin.mypics.gui.util.ImageLoader;
+import com.hideakin.mypics.gui.util.ScalingMode;
 import com.hideakin.mypics.io.FileUtils;
 import com.hideakin.mypics.model.PathNode;
 import com.hideakin.mypics.model.SelectablePath;
@@ -45,21 +58,40 @@ public class DuplicationDialog extends ModalDialog {
 		return new DuplicationDialog();
 	}
 
-	private JSplitPane _splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-	private DefaultMutableTreeNode _dRoot = new DefaultMutableTreeNode("ROOT");
-	private DefaultMutableTreeNode _fRoot = new DefaultMutableTreeNode("ROOT");
-	private JTree _dTree = new JTree(_dRoot);
-	private JTree _fTree = new JTree(_fRoot);
+	private final JSplitPane _mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JSplitPane _listPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final DefaultMutableTreeNode _dRoot = new DefaultMutableTreeNode("ROOT");
+	private final DefaultMutableTreeNode _fRoot = new DefaultMutableTreeNode("ROOT");
+	private final JTree _dTree = new JTree(_dRoot);
+	private final JTree _fTree = new JTree(_fRoot);
+	private final JScrollPane _imagePane = new JScrollPane();
+	private final JLabel _imageLabel = new JLabel();
+	private final Map<String, PathNode> _hashes = new HashMap<>();
+	private final AtomicInteger _state = new AtomicInteger(0);
+	private final AtomicInteger _count = new AtomicInteger(0);
+	private final Map<Path, Icon> _icons = new HashMap<>(8192);
 	private Thread _background = new Thread(() -> run());
-	private Map<String, PathNode> _hashes = new HashMap<>();
-	private AtomicInteger _state = new AtomicInteger(0);
-	private AtomicInteger _count = new AtomicInteger(0);
-	private Map<Path, Icon> _icons = new HashMap<>(8192);
 
 	private DuplicationDialog() {
 		super("Detect duplicate files");
 		getContentPane().setLayout(new BorderLayout());
-		add(_splitPane, BorderLayout.CENTER);
+		add(_mainPane, BorderLayout.CENTER);
+		_mainPane.setLeftComponent(_listPane);
+		_mainPane.setRightComponent(_imagePane);
+		_mainPane.setDividerLocation(600);
+        _listPane.setTopComponent(new JScrollPane(_dTree));
+        _listPane.setBottomComponent(new JScrollPane(_fTree));
+        _listPane.setDividerLocation(300);
+		_dTree.setRootVisible(false);
+		_dTree.setCellRenderer(new SelectablePathTreeCellRenderer());
+		_dTree.setCellEditor(new SelectablePathTreeCellEditor());
+		_dTree.setEditable(true);
+		_fTree.setRootVisible(false);
+		_fTree.setCellRenderer(new SelectableThumbnailedPathTreeCellRenderer(_icons));
+		_fTree.setCellEditor(new SelectableThumbnailedPathTreeCellEditor(_icons));
+		_fTree.setEditable(true);
+		_imagePane.setViewportView(_imageLabel);
+		_imageLabel.setHorizontalAlignment(JLabel.CENTER);
 		try {
 			List<Path> entries = Files.list(configuration.getDirectory()).toList();
 			List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
@@ -72,20 +104,42 @@ public class DuplicationDialog extends ModalDialog {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		_dTree.setRootVisible(false);
-		_dTree.setCellRenderer(new SelectablePathTreeCellRenderer());
-		_dTree.setCellEditor(new SelectablePathTreeCellEditor());
-		_dTree.setEditable(true);
-		_fTree.setRootVisible(false);
-		_fTree.setCellRenderer(new SelectableThumbnailedPathTreeCellRenderer(_icons));
-		_fTree.setCellEditor(new SelectableThumbnailedPathTreeCellEditor(_icons));
-		_fTree.setEditable(true);
-        _splitPane.setTopComponent(new JScrollPane(_dTree));
-        _splitPane.setBottomComponent(new JScrollPane(_fTree));
-        _splitPane.setDividerLocation(150);
+		InputMap im = _fTree.getInputMap(JComponent.WHEN_FOCUSED);
+		im.put(KeyStroke.getKeyStroke("SPACE"), "toggle-check");
+		ActionMap am = _fTree.getActionMap();
+		am.put("toggle-check", new AbstractAction() {
+		    @Override
+		    public void actionPerformed(ActionEvent e) {
+		    	TreePath path = _fTree.getSelectionPath();
+		    	if (path == null) return;
+		    	Object obj = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+		    	if (obj instanceof SelectablePath sp) {
+		    		sp.toggle();
+		    		_fTree.repaint();
+		    	}
+		    }
+		});
+		_fTree.addTreeSelectionListener(e -> {
+			TreePath path = e.getNewLeadSelectionPath();
+		    if (path != null) {
+		    	Object obj = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+		        if (obj instanceof SelectablePath sp) {
+		        	try {
+		        		BufferedImage image = ImageLoader.loadCorrectedImage(sp.path().toFile());
+		        		double scale = ImageLoader.computeScale(image, ScalingMode.FIT_TO_WINDOW, _imagePane);
+		        		Rectangle rect = ImageLoader.computeSizeByScale(image, scale);
+		        		_imageLabel.setIcon(new ImageIcon(image.getScaledInstance(rect.width, rect.height, Image.SCALE_SMOOTH)));
+		                _imageLabel.revalidate();
+		                return;
+		        	} catch (Exception ex) {
+		        	}
+		        }
+			}
+		    _imageLabel.setIcon(null);
+		});
         _buttons.applyButton.setText("Check");
         _buttons.applyButton.setMnemonic(KeyEvent.VK_K);
-		setSize(800, 400);
+		setSize(1200, 800);
 	}
 
 	private void run() {
@@ -153,6 +207,7 @@ public class DuplicationDialog extends ModalDialog {
 			}
 			SwingUtilities.invokeLater(() -> {
 				try {
+					_dTree.setEnabled(false);
 					DefaultTreeModel model = (DefaultTreeModel)_fTree.getModel();
 					model.reload(_fRoot);
 				} finally {

@@ -48,6 +48,14 @@ public class SelectableThumbnailedPathTreeCellRenderer extends JPanel implements
 			_checkBox.setSelected(child.selected());
 			_thumbnail.setIcon(Thumbnail.of(child.path(), _icons));
 			_label.setText(child.path().toString());
+			if (selected) {
+                setOpaque(true);
+                setBackground(_defaultRenderer.getBackgroundSelectionColor());
+                _label.setForeground(_defaultRenderer.getTextSelectionColor());
+            } else {
+                setOpaque(false);
+                _label.setForeground(_defaultRenderer.getTextNonSelectionColor());
+            }
 			return this;
 		} else {
 			return _defaultRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
