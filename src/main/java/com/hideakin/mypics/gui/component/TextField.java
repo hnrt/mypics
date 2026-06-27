@@ -1,4 +1,4 @@
-package com.hideakin.mypics.gui;
+package com.hideakin.mypics.gui.component;
 
 import java.awt.Color;
 import java.awt.Font;

@@ -23,6 +23,7 @@ import static com.hideakin.mypics.Application.inProcessing;
 
 import com.hideakin.mypics.Application;
 import com.hideakin.mypics.Configuration;
+import com.hideakin.mypics.gui.component.TextField;
 import com.hideakin.mypics.gui.model.DirectoryListModel;
 import com.hideakin.mypics.gui.model.FileListModel;
 import com.hideakin.mypics.util.function.ConsumerList;
