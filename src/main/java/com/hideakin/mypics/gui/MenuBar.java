@@ -14,7 +14,7 @@ import javax.swing.KeyStroke;
 import javax.swing.MenuElement;
 
 import com.hideakin.mypics.Application;
-import com.hideakin.mypics.gui.dialog.DuplicationDialog;
+import com.hideakin.mypics.gui.dialog.DuplicateFileSearchDialog;
 import com.hideakin.mypics.gui.dialog.MoveDestinationDialog;
 import com.hideakin.mypics.gui.dialog.PreferencesDialog;
 import com.hideakin.mypics.gui.dialog.TrashDialog;
@@ -280,7 +280,7 @@ public class MenuBar extends JMenuBar {
 		menu.addSeparator();
 		menu.addMenuItem("Trash...", KeyEvent.VK_T, e -> TrashDialog.create().showDialog());
 		menu.addSeparator();
-		menu.addMenuItem("Detect duplicate contents...", KeyEvent.VK_P, e -> DuplicationDialog.create().showDialog());
+		menu.addMenuItem("Detect duplicate contents...", KeyEvent.VK_P, e -> DuplicateFileSearchDialog.create().showDialog());
 	}
 
 	private void buildViewMenu() {

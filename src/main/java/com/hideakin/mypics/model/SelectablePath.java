@@ -41,4 +41,14 @@ public class SelectablePath {
 		_selected = false;
 	}
 
+	public static int countSelected(SelectablePath[] paths) {
+		int selected = 0;
+		for (SelectablePath element : paths) {
+			if (element._selected) {
+				selected++;
+			}
+		}
+		return selected;
+	}
+
 }
