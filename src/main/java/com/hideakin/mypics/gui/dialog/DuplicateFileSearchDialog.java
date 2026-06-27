@@ -9,26 +9,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTree;
 import javax.swing.SwingUtilities;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 
 import com.hideakin.mypics.gui.WorkInProgress;
+import com.hideakin.mypics.gui.component.SelectablePathTree;
 import com.hideakin.mypics.gui.component.SelectableThumbnailedPathTree;
-import com.hideakin.mypics.gui.renderer.SelectablePathTreeCellEditor;
-import com.hideakin.mypics.gui.renderer.SelectablePathTreeCellRenderer;
 import com.hideakin.mypics.gui.util.ImageLoader;
 import com.hideakin.mypics.gui.util.ScalingMode;
 import com.hideakin.mypics.io.FileUtils;
@@ -50,8 +44,7 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 
 	private final JSplitPane _mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane _listPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-	private final DefaultMutableTreeNode _dRoot = new DefaultMutableTreeNode("ROOT");
-	private final JTree _dTree = new JTree(_dRoot);
+	private final SelectablePathTree _dTree = new SelectablePathTree();
 	private final SelectableThumbnailedPathTree _fTree = new SelectableThumbnailedPathTree();
 	private final JScrollPane _imagePane = new JScrollPane();
 	private final JLabel _imageLabel = new JLabel();
@@ -70,24 +63,9 @@ public class DuplicateFileSearchDialog extends ModalDialog {
         _listPane.setTopComponent(new JScrollPane(_dTree));
         _listPane.setBottomComponent(new JScrollPane(_fTree));
         _listPane.setDividerLocation(300);
-		_dTree.setRootVisible(false);
-		_dTree.setCellRenderer(new SelectablePathTreeCellRenderer());
-		_dTree.setCellEditor(new SelectablePathTreeCellEditor());
-		_dTree.setEditable(true);
 		_imagePane.setViewportView(_imageLabel);
 		_imageLabel.setHorizontalAlignment(JLabel.CENTER);
-		try {
-			List<Path> entries = Files.list(configuration.getDirectory()).toList();
-			List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
-			dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
-			for (Path path : dd) {
-				_dRoot.add(new DefaultMutableTreeNode(new SelectablePath(path, false)));
-			}
-			DefaultTreeModel model = (DefaultTreeModel)_dTree.getModel();
-			model.reload();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		_dTree.loadSubdirectories(configuration.getDirectory());
 		_fTree.onSelected(path -> {
         	try {
 	    		BufferedImage image = ImageLoader.loadCorrectedImage(path.toFile());
@@ -110,16 +88,11 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 			_hashes.clear();
 			_count.set(0);
 			_state.set(1);
-			int n = _dRoot.getChildCount();
-			for (int i = 0; i < n; i++) {
+			for (Path path : _dTree.checked()) {
 				if (_state.get() == -1) {
 					return;
 				}
-				DefaultMutableTreeNode node = (DefaultMutableTreeNode)_dRoot.getChildAt(i);
-				SelectablePath sp = (SelectablePath)node.getUserObject();
-				if (sp.selected()) {
-					walk(sp.path());
-				}
+				walk(path);
 			}
 			for (Map.Entry<String, PathNode> entry : _hashes.entrySet()) {
 				if (_state.get() == -1) {
