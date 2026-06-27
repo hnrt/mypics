@@ -1,10 +1,7 @@
 package com.hideakin.mypics.gui.dialog;
 
 import java.awt.BorderLayout;
-import java.awt.Image;
-import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,17 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
-import com.hideakin.mypics.gui.WorkInProgress;
+import com.hideakin.mypics.gui.ImagePane;
 import com.hideakin.mypics.gui.component.SelectablePathTree;
 import com.hideakin.mypics.gui.component.SelectableThumbnailedPathTree;
-import com.hideakin.mypics.gui.util.ImageLoader;
-import com.hideakin.mypics.gui.util.ScalingMode;
+import com.hideakin.mypics.gui.util.WorkInProgress;
 import com.hideakin.mypics.io.FileUtils;
 import com.hideakin.mypics.model.PathNode;
 import com.hideakin.mypics.model.SelectablePath;
@@ -46,8 +40,7 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 	private final JSplitPane _listPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final SelectablePathTree _dTree = new SelectablePathTree();
 	private final SelectableThumbnailedPathTree _fTree = new SelectableThumbnailedPathTree();
-	private final JScrollPane _imagePane = new JScrollPane();
-	private final JLabel _imageLabel = new JLabel();
+	private final ImagePane _imagePane = ImagePane.create();
 	private final Map<String, PathNode> _hashes = new HashMap<>();
 	private final AtomicInteger _state = new AtomicInteger(0);
 	private final AtomicInteger _count = new AtomicInteger(0);
@@ -63,21 +56,8 @@ public class DuplicateFileSearchDialog extends ModalDialog {
         _listPane.setTopComponent(new JScrollPane(_dTree));
         _listPane.setBottomComponent(new JScrollPane(_fTree));
         _listPane.setDividerLocation(300);
-		_imagePane.setViewportView(_imageLabel);
-		_imageLabel.setHorizontalAlignment(JLabel.CENTER);
 		_dTree.loadSubdirectories(configuration.getDirectory());
-		_fTree.onSelected(path -> {
-        	try {
-	    		BufferedImage image = ImageLoader.loadCorrectedImage(path.toFile());
-	    		double scale = ImageLoader.computeScale(image, ScalingMode.FIT_TO_WINDOW, _imagePane);
-	    		Rectangle rect = ImageLoader.computeSizeByScale(image, scale);
-	    		_imageLabel.setIcon(new ImageIcon(image.getScaledInstance(rect.width, rect.height, Image.SCALE_SMOOTH)));
-	            _imageLabel.revalidate();
-	            return;
-	    	} catch (Exception ex) {
-	    	}
-        	_imageLabel.setIcon(null);
-		});
+		_fTree.onSelected(path -> _imagePane.loadFrom(path));
         _buttons.applyButton.setText("Check");
         _buttons.applyButton.setMnemonic(KeyEvent.VK_K);
 		setSize(1200, 800);

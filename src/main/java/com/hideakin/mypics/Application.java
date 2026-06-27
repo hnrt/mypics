@@ -9,7 +9,7 @@ import java.util.Locale;
 import javax.swing.SwingUtilities;
 
 import com.hideakin.mypics.gui.MainFrame;
-import com.hideakin.mypics.gui.WorkInProgress;
+import com.hideakin.mypics.gui.util.WorkInProgress;
 import com.hideakin.mypics.io.FileManager;
 
 public class Application {
