@@ -47,7 +47,7 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 	private Thread _background = new Thread(() -> run());
 
 	private DuplicateFileSearchDialog() {
-		super("Detect duplicate files");
+		super("Select directories to check duplicate files");
 		getContentPane().setLayout(new BorderLayout());
 		add(_mainPane, BorderLayout.CENTER);
 		_mainPane.setLeftComponent(_listPane);
@@ -60,6 +60,10 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 		_fTree.onSelected(path -> _imagePane.loadFrom(path));
         _buttons.applyButton.setText("Check");
         _buttons.applyButton.setMnemonic(KeyEvent.VK_K);
+        _buttons.applyButton.setEnabled(false);
+        _dTree.onChanged(x -> {
+        	_buttons.applyButton.setEnabled(_dTree.checked().length > 0);
+        });
 		setSize(1200, 800);
 	}
 
@@ -80,67 +84,36 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 				}
 				PathNode node = entry.getValue();
 				if (node.next() != null) {
+					String key = entry.getKey();
 					do {
-						_fTree.add(entry.getKey(), node.path(), true);
+						_fTree.add(key, node.path(), true);
 					} while ((node = node.next()) != null);
 				}
 			}
 			int duplicated = _fTree.tags().length;
-			while (!_state.compareAndSet(1, 2)) {
-				if (_state.get() == -1) {
-					return;
-				}
-			}
-			SwingUtilities.invokeLater(() -> {
-				try {
-					if (duplicated > 0) {
-						setTitle(String.format("Detected %d %s. Uncheck to remove.", duplicated, duplicated > 1 ? "duplicate sets" : "duplicate set"));
-						_buttons.applyButton.setText("Apply");
-						_buttons.applyButton.setMnemonic(KeyEvent.VK_A);
-					} else {
-						setTitle(String.format("Detected no duplicate sets."));
-					}
+			if (!invokeLater(() -> {
+				if (duplicated > 0) {
+					setTitle(String.format("Detected %d %s. Check to leave and uncheck to remove.", duplicated, duplicated > 1 ? "duplicate sets" : "duplicate set"));
+					_buttons.applyButton.setText("Apply");
+					_buttons.applyButton.setMnemonic(KeyEvent.VK_A);
 					_buttons.applyButton.setEnabled(true);
-				} finally {
-					_state.compareAndSet(2, 1);
+				} else {
+					setTitle(String.format("Detected no duplicate files."));
 				}
-			});
+			})) return;
 			if (duplicated == 0) {
-				while (!_state.compareAndSet(1, 0)) {
-					if (_state.get() == -1) {
-						return;
-					}
-				}
-				_background = new Thread(() -> run());
+				if (reset()) _background = new Thread(() -> run());
 				return;
 			}
-			while (!_state.compareAndSet(1, 2)) {
-				if (_state.get() == -1) {
-					return;
-				}
-			}
-			SwingUtilities.invokeLater(() -> {
-				try {
-					_dTree.setEnabled(false);
-					_fTree.reloadRoot();
-				} finally {
-					_state.compareAndSet(2, 1);
-				}
-			});
+			if (!invokeLater(() -> {
+				_dTree.setEnabled(false);
+				_fTree.reloadRoot();
+			})) return;
 			String[] tags = _fTree.tags();
 			for (String tag : tags) {
-				while (!_state.compareAndSet(1, 2)) {
-					if (_state.get() == -1) {
-						return;
-					}
-				}
-				SwingUtilities.invokeLater(() -> {
-					try {
-						_fTree.expandTag(tag);
-					} finally {
-						_state.compareAndSet(2, 1);
-					}
-				});
+				if (!invokeLater(() -> {
+					_fTree.expandTag(tag);
+				})) return;
 			}
 		});
 	}
@@ -151,18 +124,9 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 				return;
 			}
 			Files.list(directory).filter(e -> Files.isRegularFile(e)).forEach(e -> {
-				while (!_state.compareAndSet(1, 2)) {
-					if (_state.get() == -1) {
-						return;
-					}
-				}
-				SwingUtilities.invokeLater(() -> {
-					try {
-						setTitle(String.format("Loaded %d files (now loading %s)", _count.get(), e));
-					} finally {
-						_state.compareAndSet(2, 1);
-					}
-				});
+				if (!invokeLater(() -> {
+					setTitle(String.format("Loaded %d files (now loading %s)", _count.get(), e));
+				})) return;
 				String hash = FileUtils.computeSHA256(e);
 				if (hash != null) {
 					try {
@@ -184,6 +148,39 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private boolean invokeLater(Runnable x) {
+		while (!_state.compareAndSet(1, 2)) {
+			if (_state.get() == -1) {
+				return false;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException ie) {
+			}
+		}
+		SwingUtilities.invokeLater(() -> {
+			try {
+				x.run();
+			} finally {
+				_state.compareAndSet(2, 1);
+			}
+		});
+		return true;
+	}
+
+	private boolean reset() {
+		while (!_state.compareAndSet(1, 0)) {
+			if (_state.get() == -1) {
+				return false;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException ie) {
+			}
+		}
+		return true;
 	}
 
 	@Override

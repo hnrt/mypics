@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.swing.JTree;
@@ -14,6 +15,7 @@ import javax.swing.tree.DefaultTreeModel;
 import com.hideakin.mypics.gui.renderer.SelectablePathTreeCellEditor;
 import com.hideakin.mypics.gui.renderer.SelectablePathTreeCellRenderer;
 import com.hideakin.mypics.model.SelectablePath;
+import com.hideakin.mypics.util.function.ConsumerList;
 
 public class SelectablePathTree extends JTree {
 
@@ -21,12 +23,13 @@ public class SelectablePathTree extends JTree {
 
 	private final DefaultTreeModel _model;
 	private final DefaultMutableTreeNode _root;
+	private final ConsumerList<SelectablePath> _onChanged = new ConsumerList<>();
 
 	public SelectablePathTree() {
 		super(new DefaultMutableTreeNode("ROOT"));
 		setRootVisible(false);
 		setCellRenderer(new SelectablePathTreeCellRenderer());
-		setCellEditor(new SelectablePathTreeCellEditor());
+		setCellEditor(new SelectablePathTreeCellEditor(x -> _onChanged.invoke(x)));
 		setEditable(true);
 		_model = (DefaultTreeModel)super.getModel();
 		_root = (DefaultMutableTreeNode)_model.getRoot();
@@ -57,6 +60,10 @@ public class SelectablePathTree extends JTree {
 			}
 		}
 		return pp.toArray(new Path[pp.size()]);
+	}
+
+	public void onChanged(Consumer<SelectablePath> callback) {
+		_onChanged.add(callback);
 	}
 
 }

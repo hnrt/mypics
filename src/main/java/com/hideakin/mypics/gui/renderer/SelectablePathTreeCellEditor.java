@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
+import java.util.function.Consumer;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.JCheckBox;
@@ -27,18 +28,23 @@ public class SelectablePathTreeCellEditor extends AbstractCellEditor implements 
     private final JCheckBox _checkBox = new JCheckBox();
     private final JLabel _label = new JLabel();
     private SelectablePath _current;
+    private Consumer<SelectablePath> _onChanged;
 
-	public SelectablePathTreeCellEditor() {
+	public SelectablePathTreeCellEditor(Consumer<SelectablePath> onChanged) {
 		super();
 		_panel.add(_checkBox);
 		_panel.add(_label);
 		_panel.setOpaque(false);
 		_checkBox.setOpaque(false);
 		_label.setOpaque(false);
+		_onChanged = onChanged;
         _checkBox.addActionListener(e -> {
             if (_current != null) {
                 _current.set(_checkBox.isSelected());
     			debug(3, "SelectablePathTreeCellEditor::SelectablePathTreeCellEditor: %s %s", _current.selected() ? "T" : "F", _current.path());
+    			if (_onChanged != null) {
+    				_onChanged.accept(_current);
+    			}
             }
             stopCellEditing();
         });

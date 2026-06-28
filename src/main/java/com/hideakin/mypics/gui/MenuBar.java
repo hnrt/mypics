@@ -280,7 +280,7 @@ public class MenuBar extends JMenuBar {
 		menu.addSeparator();
 		menu.addMenuItem("Trash...", KeyEvent.VK_T, e -> TrashDialog.create().showDialog());
 		menu.addSeparator();
-		menu.addMenuItem("Detect duplicate contents...", KeyEvent.VK_P, e -> DuplicateFileSearchDialog.create().showDialog());
+		menu.addMenuItem("Duplicate file search...", KeyEvent.VK_P, e -> DuplicateFileSearchDialog.create().showDialog());
 	}
 
 	private void buildViewMenu() {
