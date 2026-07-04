@@ -57,7 +57,7 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 		List<Path> list = new ArrayList<>();
 		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
 		if (keyNode != null) {
-			if (keyNode.getChildAt(0) instanceof TargetDirectoryTreeNode tdNode) {
+			if (keyNode.getChildAt(1) instanceof TargetDirectoryTreeNode tdNode) {
 				int n = tdNode.getChildCount();
 				for (int i = 0; i < n; i++) {
 					if (tdNode.getChildAt(i) instanceof SelectablePathTreeNode spNode) {

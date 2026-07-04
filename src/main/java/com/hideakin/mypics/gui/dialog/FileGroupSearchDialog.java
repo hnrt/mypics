@@ -157,13 +157,13 @@ public class FileGroupSearchDialog extends ModalDialog {
 					String fileName = e.getFileName().toString();
 					Matcher m = _pattern.matcher(fileName);
 					if (m.find()) {
-						String tag = m.group();
-						if (tag == null) return;
-						PathNode node = _sources.get(tag);
+						String key = m.group();
+						if (key == null) return;
+						PathNode node = _sources.get(key);
 						if (node != null) {
 							node.add(e);
 						} else {
-							_sources.put(tag, PathNode.of(e));
+							_sources.put(key, PathNode.of(e));
 						}
 					}
 				});
@@ -177,13 +177,13 @@ public class FileGroupSearchDialog extends ModalDialog {
 					String fileName = e.getFileName().toString();
 					Matcher m = _pattern.matcher(fileName);
 					if (m.find()) {
-						String tag = m.group();
-						if (tag == null) return;
-						PathNode node = _destinations.get(tag);
+						String key = m.group();
+						if (key == null) return;
+						PathNode node = _destinations.get(key);
 						if (node != null) {
 							node.add(directory);
 						} else {
-							_destinations.put(tag, PathNode.of(directory));
+							_destinations.put(key, PathNode.of(directory));
 						}
 					}
 				});
@@ -194,10 +194,10 @@ public class FileGroupSearchDialog extends ModalDialog {
 		FileGroupSearchTreeModel model = (FileGroupSearchTreeModel)_resultTree.model();
 		for (String key : _sources.keySet()) {
 			PathNode s = _sources.get(key);
-			model.addKey(key);
-			model.addMatchedFiles(key, s);
 			PathNode d = _destinations.get(key);
 			if (d != null) {
+				model.addKey(key);
+				model.addMatchedFiles(key, s);
 				model.addTargetDirectories(key, d);
 				invokeLater(() -> {
 					model.reloadKey(key);
