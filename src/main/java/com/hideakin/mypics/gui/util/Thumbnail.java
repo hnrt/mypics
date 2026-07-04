@@ -7,28 +7,112 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
 import static com.hideakin.mypics.Application.debug;
 
 public class Thumbnail {
 
-	public static int size = 50;
+	public static final int DEFAULT_SIZE = 50;
+	public static final int SMALL_SIZE = 25;
+	public static final int BIG_SIZE = 100;
 
-	public static Icon DEFAULT = UIManager.getIcon("FileView.fileIcon");
+	public static final Icon DEFAULT_ICON = UIManager.getIcon("FileView.fileIcon");
+
+	public static final Icon DEFAULT_BLACK;
+	public static final Icon SMALL_BLACK;
+	public static final Icon BIG_BLACK;
+
+	public static boolean clipping = true;
+
+	static {
+		DEFAULT_BLACK = new ImageIcon(new BufferedImage(DEFAULT_SIZE, DEFAULT_SIZE, BufferedImage.TYPE_INT_RGB));
+		SMALL_BLACK = new ImageIcon(new BufferedImage(SMALL_SIZE, SMALL_SIZE, BufferedImage.TYPE_INT_RGB));
+		BIG_BLACK = new ImageIcon(new BufferedImage(BIG_SIZE, BIG_SIZE, BufferedImage.TYPE_INT_RGB));
+	}
 
 	public static Icon of(Path path) {
-		return of(path, null);
+		return of(path, DEFAULT_SIZE);
 	}
 
 	public static Icon of(Path path, Map<Path, Icon> cache) {
-		Icon icon = cache != null ? cache.get(path) : null;
+		return of(path, DEFAULT_SIZE, cache);
+	}
+
+	public static Icon of(Path path, Map<Path, Icon> cache, Consumer<Icon> callback) {
+		return of(path, DEFAULT_SIZE, cache, callback);
+	}
+
+	public static Icon of(Path path, int size) {
+		return load(path, size);
+	}
+
+	public static Icon of(Path path, int size, Consumer<Icon> callback) {
+		SwingWorker<Icon, Void> worker = new SwingWorker<>() {
+
+			@Override
+            protected Icon doInBackground() throws Exception {
+            	return load(path, size);
+            }
+
+            @Override
+            protected void done() {
+            	try {
+            		callback.accept(get());
+        		} catch (Exception e) {
+        			e.printStackTrace();
+        		}
+            }
+
+		};
+		worker.execute();
+		return black(size);
+	}
+
+	public static Icon of(Path path, int size, Map<Path, Icon> cache) {
+		Icon icon = cache.get(path);
 		if (icon != null) {
 			return icon;
 		}
+		icon = load(path, size);
+		cache.put(path, icon);
+		return icon;
+	}
+
+	public static Icon of(Path path, int size, Map<Path, Icon> cache, Consumer<Icon> callback) {
+		Icon icon = cache.get(path);
+		if (icon != null) {
+			return icon;
+		}
+		SwingWorker<Icon, Void> worker = new SwingWorker<>() {
+
+			@Override
+            protected Icon doInBackground() throws Exception {
+            	return load(path, size);
+            }
+
+            @Override
+            protected void done() {
+            	try {
+            		Icon icon = get();
+           			cache.put(path, icon);
+            		callback.accept(icon);
+        		} catch (Exception e) {
+        			e.printStackTrace();
+        		}
+            }
+
+		};
+		worker.execute();
+		return black(size);
+	}
+
+	public static Icon load(Path path, int size) {
 		try {
 			long fileSize = Files.size(path);
 			int subsampling = fileSize <= 65536 ? 1 : fileSize <= 262144 ? 2 : fileSize <= 1048576 ? 4 : fileSize <= 4194304 ? 8 : 16;
@@ -40,31 +124,48 @@ public class Thumbnail {
 				double oh = original.getHeight();
 				double sw = (double)size;
 				double sh = (double)size;
-				if (ow > oh) {
-					sh = sw * oh / ow;
-				} else if (ow < oh){
-					sw = sh * ow / oh;
+				if (clipping) {
+					if (ow > oh) {
+						sw = sh * ow / oh;
+					} else if (ow < oh){
+						sh = sw * oh / ow;
+					}
+					int x1 = ((int)sw - size) / 2;
+					int y1 = ((int)sh - size) / 2;
+					int x2 = x1 + size;
+					int y2 = y1 + size;
+					debug(3, "createThumbnail: %d %dx%d %s", subsampling, (int)sw, (int)sh, path);
+					Image scaled = original.getScaledInstance((int)sw, (int)sh, Image.SCALE_SMOOTH);
+					BufferedImage rgb = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
+				    Graphics2D g = rgb.createGraphics();
+				    g.drawImage(scaled, 0, 0, size, size, x1, y1, x2, y2, null);
+				    g.dispose();
+					return new ImageIcon(rgb);
+				} else {
+					if (ow > oh) {
+						sh = sw * oh / ow;
+					} else if (ow < oh){
+						sw = sh * ow / oh;
+					}
+					debug(3, "createThumbnail: %d %dx%d %s", subsampling, (int)sw, (int)sh, path);
+					Image scaled = original.getScaledInstance((int)sw, (int)sh, Image.SCALE_SMOOTH);
+					BufferedImage rgb = new BufferedImage((int)sw, (int)sh, BufferedImage.TYPE_INT_RGB);
+				    Graphics2D g = rgb.createGraphics();
+				    g.drawImage(scaled, 0, 0, null);
+				    g.dispose();
+					return new ImageIcon(rgb);
 				}
-				debug(3, "createThumbnail: %d %dx%d %s", subsampling, (int)sw, (int)sh, path);
-				Image scaled = original.getScaledInstance((int)sw, (int)sh, Image.SCALE_SMOOTH);
-				BufferedImage rgb = new BufferedImage((int)sw, (int)sh, BufferedImage.TYPE_INT_RGB);
-			    Graphics2D g = rgb.createGraphics();
-			    g.drawImage(scaled, 0, 0, null);
-			    g.dispose();
-				icon = new ImageIcon(rgb);
-			} else {
-				icon = DEFAULT;
 			}
 		} catch (NoSuchElementException nsee) {
-			icon = DEFAULT;
+			//NOP
 		} catch (Exception e) {
 			e.printStackTrace();
-			icon = DEFAULT;
 		}
-		if (cache != null) {
-			cache.put(path, icon);
-		}
-		return icon;
+		return DEFAULT_ICON;
+	}
+
+	public static Icon black(int size) {
+		return size == DEFAULT_SIZE ? DEFAULT_BLACK : size == BIG_SIZE ? BIG_BLACK : size == SMALL_SIZE ? SMALL_BLACK : DEFAULT_BLACK;
 	}
 
 }

@@ -3,14 +3,18 @@ package com.hideakin.mypics.gui.dialog;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
+import java.util.regex.Pattern;
+
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
-import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.util.ScalingMode;
+import static com.hideakin.mypics.Application.configuration;
+import static com.hideakin.mypics.Application.mainFrame;
 
 public class PreferencesDialog extends ModalDialog {
 
@@ -65,18 +69,18 @@ public class PreferencesDialog extends ModalDialog {
 			}
 
 			private int getScaleItemIndex() {
-				double s = Application.configuration.getScale();
+				double s = configuration.getScale();
 				for (int i = 0; i < _items.length; i++) {
 					if (_items[i].scale == s) {
 						return i;
 					}
 				}
-				Application.configuration.setScale(_items[3].scale);
+				configuration.setScale(_items[3].scale);
 				return 3;
 			}
 
 			public void apply() {
-				Application.configuration.setScale(((ScaleItem)getSelectedItem()).scale);
+				configuration.setScale(((ScaleItem)getSelectedItem()).scale);
 			}
 
 		}
@@ -129,7 +133,7 @@ public class PreferencesDialog extends ModalDialog {
 	        group.add(_rb2);
 	        group.add(_rb3);
 	        group.add(_rb4.radioButton());
-	        ScalingMode sm = Application.configuration.getScalingMode();
+	        ScalingMode sm = configuration.getScalingMode();
 	        if (sm == ScalingMode.FIT_TO_WINDOW) {
 	        	_rb1.setSelected(true);
 	        } else if (sm == ScalingMode.FIT_TO_WINDOW_WIDTH) {
@@ -148,30 +152,64 @@ public class PreferencesDialog extends ModalDialog {
 
 		public void apply() {
 			if (_rb1.isSelected()) {
-				Application.configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW);
+				configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW);
 			} else if (_rb2.isSelected()) {
-				Application.configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_WIDTH);
+				configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_WIDTH);
 			} else if (_rb3.isSelected()) {
-				Application.configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_HEIGHT);
+				configuration.setScalingMode(ScalingMode.FIT_TO_WINDOW_HEIGHT);
 			} else {
-				Application.configuration.setScalingMode(ScalingMode.RATIO);
+				configuration.setScalingMode(ScalingMode.RATIO);
 				_rb4.comboBox().apply();
 			}
 		}
 
 	}
 
-	private final ImageSizePanel _imageSizePanel;
+	private static class FileGroupPatternPanel extends JPanel {
+
+		private static final long serialVersionUID = -640192023082359591L;
+
+		public static FileGroupPatternPanel of(String label) {
+			return new FileGroupPatternPanel(label);
+		}
+
+		private final JTextField _textField = new JTextField(configuration.getFileGroupPattern());
+
+		private FileGroupPatternPanel(String label) {
+			super(new BorderLayout());
+			add(_textField, BorderLayout.CENTER);
+			setBorder(BorderFactory.createTitledBorder(label));
+		}
+
+		public void apply() {
+			try {
+				String text = _textField.getText();
+				Pattern.compile(text);
+				configuration.setFileGroupPattern(text);
+			} catch (Exception e) {
+				e.printStackTrace();
+				mainFrame.showErrorDialog("Bad file group pattern.");
+			}
+		}
+
+	}
+
+	private final JPanel _base = new JPanel(new BorderLayout());
+	private final ImageSizePanel _imageSizePanel = ImageSizePanel.of("Image Size");
+	private final FileGroupPatternPanel _fileGroupPatternPanel = FileGroupPatternPanel.of("File Group Pattern");
 
 	private PreferencesDialog() {
 		super("Preferences");
-        _imageSizePanel = ImageSizePanel.of("Image Size");
-        add(_imageSizePanel, BorderLayout.CENTER);
+		getContentPane().setLayout(new BorderLayout());
+		add(_base, BorderLayout.CENTER);
+		_base.add(_imageSizePanel, BorderLayout.NORTH);
+		_base.add(_fileGroupPatternPanel, BorderLayout.SOUTH);
 	}
 
 	@Override
 	public void apply() {
 		_imageSizePanel.apply();
+		_fileGroupPatternPanel.apply();
 		super.apply();
 	}
 

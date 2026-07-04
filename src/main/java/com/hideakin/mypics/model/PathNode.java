@@ -26,11 +26,14 @@ public class PathNode {
 
 	public PathNode add(Path path) {
 		PathNode current = this;
-		PathNode next;
-		while ((next = current._next) != null) {
+		while (!current._path.equals(path)) {
+			PathNode next = current._next;
+			if (next == null) {
+				current._next = new PathNode(path);
+				break;
+			}
 			current = next;
 		}
-		current._next = new PathNode(path);
 		return this;
 	}
 

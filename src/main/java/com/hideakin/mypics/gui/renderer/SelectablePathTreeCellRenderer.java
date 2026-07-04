@@ -37,8 +37,9 @@ public class SelectablePathTreeCellRenderer extends JPanel implements TreeCellRe
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
 		Object obj = node.getUserObject();
 		if (obj instanceof SelectablePath sp) {
-			debug(3, "SelectablePathTreeCellRenderer::getTreeCellRendererComponent: %s %s", sp.selected() ? "T" : "F", sp.path());
+			debug(4, "SelectablePathTreeCellRenderer::getTreeCellRendererComponent: %s %s", sp.selected() ? "T" : "F", sp.path());
 			_checkBox.setSelected(sp.selected());
+			_checkBox.setEnabled(sp.enabled());
 			_label.setText(sp.path().toString());
 			return this;
 		} else {

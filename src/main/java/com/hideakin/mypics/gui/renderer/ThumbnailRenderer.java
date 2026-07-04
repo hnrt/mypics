@@ -13,6 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
 import com.hideakin.mypics.Application;
+import com.hideakin.mypics.gui.model.FileListModel;
 import com.hideakin.mypics.gui.util.Thumbnail;
 
 public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> {
@@ -37,7 +38,12 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 			boolean isSelected,
 			boolean cellHasFocus) {
 		_nameLabel.setText(value.getFileName().toString());
-		Icon icon = Thumbnail.of(value, _iconCache);
+		Icon icon = Thumbnail.of(value, _iconCache, iconLoaded -> {
+			_iconLabel.setIcon(iconLoaded);
+			if (list.getModel() instanceof FileListModel flm) {
+				flm.set(index, flm.getElementAt(index));
+			}
+		});
 		_iconLabel.setIcon(icon);
 		if (isSelected) {
 			setBackground(list.getSelectionBackground());

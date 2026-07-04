@@ -22,11 +22,16 @@ public class ModalDialog extends JDialog {
 			return new ButtonPanel(owner);
 		}
 
+		public final JButton testButton = new JButton("Test");
 		public final JButton applyButton = new JButton("Apply");
 		public final JButton cancelButton = new JButton("Cancel");
 
 		private ButtonPanel(ModalDialog owner) {
 			super();
+			testButton.addActionListener(e -> {
+				owner.test();
+			});
+			testButton.setMnemonic(KeyEvent.VK_T);
 			applyButton.addActionListener(e -> {
 				owner.apply();
 			});
@@ -35,8 +40,10 @@ public class ModalDialog extends JDialog {
 				owner.cancel();
 			});
 			cancelButton.setMnemonic(KeyEvent.VK_C);
+			add(testButton);
 	        add(applyButton);
 	        add(cancelButton);
+	        testButton.setVisible(false);
 		}
 		
 	}
@@ -57,6 +64,9 @@ public class ModalDialog extends JDialog {
         }
         setLocationRelativeTo(Application.mainFrame);
 		setVisible(true);
+	}
+
+	public void test() {
 	}
 
 	public void apply() {

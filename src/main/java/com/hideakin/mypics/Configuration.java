@@ -56,6 +56,7 @@ public class Configuration {
 		public boolean directoryFilterVisibility = true;
 		public Path trashDirectory = DEFAULT_TRASH_PATH;
 		public int fileListCellRenderer = 0;
+		public String fileGroupPattern = "";
 
 		public ConfigurationDocument() {
 			recent[0] = Path.of("").toAbsolutePath();
@@ -77,6 +78,7 @@ public class Configuration {
 			Application.debug(3, "ConfigurationDocument: filterDirectoryVisibility=%s", directoryFilterVisibility ? "true" : "false");
 			Application.debug(3, "ConfigurationDocument: trashDirectory=%s", trashDirectory);
 			Application.debug(3, "ConfigurationDocument: fileListCellRenderer=%d", fileListCellRenderer);
+			Application.debug(3, "ConfigurationDocument: fileGroupPattern=%s", fileGroupPattern);
 		}
 
 	}
@@ -292,6 +294,14 @@ public class Configuration {
 
 	public void setFileListCellRenderer(int value) {
 		_document.fileListCellRenderer = value;
+	}
+
+	public String getFileGroupPattern() {
+		return _document.fileGroupPattern;
+	}
+
+	public void setFileGroupPattern(String value) {
+		_document.fileGroupPattern = value;
 	}
 
 }

@@ -12,6 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 
 import com.hideakin.mypics.gui.util.Thumbnail;
@@ -46,7 +47,17 @@ public class SelectableThumbnailedPathTreeCellRenderer extends JPanel implements
 		Object obj = node.getUserObject();
 		if (obj instanceof SelectablePath child) {
 			_checkBox.setSelected(child.selected());
-			_thumbnail.setIcon(Thumbnail.of(child.path(), _icons));
+			if (child.type() == SelectablePath.REGULAR_FILE) {
+				_thumbnail.setIcon(Thumbnail.of(child.path(), _icons, icon -> {
+					_thumbnail.setIcon(icon);
+					_thumbnail.setVisible(true);
+					DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+					model.nodeChanged(node);
+				}));
+				_thumbnail.setVisible(true);
+			} else {
+				_thumbnail.setVisible(false);
+			}
 			_label.setText(child.path().toString());
 			if (selected) {
                 setOpaque(true);

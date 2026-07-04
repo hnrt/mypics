@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.EventObject;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.Icon;
@@ -17,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellEditor;
 import javax.swing.tree.TreePath;
 
@@ -33,8 +35,9 @@ public class SelectableThumbnailedPathTreeCellEditor extends AbstractCellEditor 
 	private final JLabel _thumbnail = new JLabel();
     private JLabel _label = new JLabel();
     private SelectablePath _current;
+    private Consumer<SelectablePath> _onChanged;
 
-	public SelectableThumbnailedPathTreeCellEditor(Map<Path, Icon> icons) {
+	public SelectableThumbnailedPathTreeCellEditor(Map<Path, Icon> icons, Consumer<SelectablePath> onChanged) {
 		super();
 		_icons = icons;
 		_panel.add(_checkBox);
@@ -44,10 +47,14 @@ public class SelectableThumbnailedPathTreeCellEditor extends AbstractCellEditor 
 		_checkBox.setOpaque(false);
 		_thumbnail.setOpaque(false);
 		_label.setOpaque(false);
+		_onChanged = onChanged;
         _checkBox.addActionListener(e -> {
             if (_current != null) {
-                _current.set(_checkBox.isSelected());
-    			debug(3, "SelectableThumbnailedPathTreeCellEditor::SelectablePathTreeCellEditor: %s %s", _current.selected() ? "T" : "F", _current.path());
+                _current.setSelected(_checkBox.isSelected());
+    			debug(4, "SelectableThumbnailedPathTreeCellEditor::SelectablePathTreeCellEditor: %s %s", _current.selected() ? "T" : "F", _current.path());
+    			if (_onChanged != null) {
+    				_onChanged.accept(_current);
+    			}
             }
             stopCellEditing();
         });
@@ -68,7 +75,17 @@ public class SelectableThumbnailedPathTreeCellEditor extends AbstractCellEditor 
 			debug(3, "SelectableThumbnailedPathTreeCellEditor::getTreeCellEditorComponent: %s %s", sp.selected() ? "T" : "F", sp.path());
             _current = sp;
             _checkBox.setSelected(sp.selected());
-            _thumbnail.setIcon(Thumbnail.of(sp.path(), _icons));
+			if (sp.type() == SelectablePath.REGULAR_FILE) {
+				_thumbnail.setIcon(Thumbnail.of(sp.path(), _icons, icon -> {
+					_thumbnail.setIcon(icon);
+					_thumbnail.setVisible(true);
+					DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+					model.nodeChanged(node);
+				}));
+				_thumbnail.setVisible(true);
+			} else {
+				_thumbnail.setVisible(false);
+			}
             _label.setText(sp.path().toString());
             return _panel;
         }
