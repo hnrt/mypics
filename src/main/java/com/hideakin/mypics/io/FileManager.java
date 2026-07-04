@@ -80,9 +80,14 @@ public class FileManager {
 		List<Path> processedList = new ArrayList<>();
 		if (sourceFiles != null && targetDirectory != null) {
 			if (sourceFiles.size() == 1) {
-				Path processed = move(sourceFiles.get(0), targetDirectory, cb);
-				if (processed != null) {
-					processedList.add(processed);
+				try {
+					MoveFileOperation mf = MoveFileOperation.of(sourceFiles.get(0), targetDirectory);
+					mf.execute();
+					_operations.push(new OperationList(mf));
+					_canMoveLaterThan = System.currentTimeMillis() + _configuration.getMoveFileInterval();
+					processedList.add(sourceFiles.get(0));
+				} catch (Exception e) {
+					cb.accept(e);
 				}
 			} else if (sourceFiles.size() > 1) {
 				OperationList list = new OperationList();

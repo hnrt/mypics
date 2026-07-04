@@ -111,8 +111,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 			_buttons.applyButton.setEnabled(false);
 		});
 		_resultTree.onChanged(x -> {
-			FileGroupSearchTreeModel model = (FileGroupSearchTreeModel)_resultTree.model();
-			_buttons.applyButton.setEnabled(model.canProcess());
+			//NOP
 		});
 		_resultTree.onSelected(x -> {
 			int loc = _basePane.getDividerLocation();
@@ -207,9 +206,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 		String[] keys = model.keys();
 		invokeLater(() -> {
 			_resultLabel.setText(String.format("File groups: %d", keys.length));
-			if (model.canProcess()) {
-				_buttons.applyButton.setEnabled(true);
-			}
+			_buttons.applyButton.setEnabled(true);
 			_buttons.testButton.setEnabled(true);
 		});
 		for (String key : keys) {

@@ -156,30 +156,4 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 		return kk;
 	}
 
-	public boolean canProcess() {
-		int n = _root.getChildCount();
-		if (n == 0) return false;
-		for (int i = 0; i < n; i++) {
-			DefaultMutableTreeNode keyNode = (DefaultMutableTreeNode)_root.getChildAt(i);
-			if (keyNode.getChildAt(1) instanceof TargetDirectoryTreeNode tNode) {
-				int m = tNode.getChildCount();
-				if (m == 0) return false;
-				int k = 0;
-				for (int j = 0; j < m; j++) {
-					if (tNode.getChildAt(j) instanceof SelectablePathTreeNode pNode) {
-						if (pNode.selectablePath().selected()) {
-							k++;
-						}
-					} else {
-						return false;
-					}
-				}
-				if (k != 1) return false;
-			} else {
-				throw new RuntimeException("FileGroupTreeModel::addMatchedFile: Corrupted.");
-			}
-		}
-		return true;
-	}
-
 }
