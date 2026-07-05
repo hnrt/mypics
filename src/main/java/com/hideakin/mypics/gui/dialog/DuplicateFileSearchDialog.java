@@ -1,6 +1,7 @@
 package com.hideakin.mypics.gui.dialog;
 
 import java.awt.BorderLayout;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,11 +15,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.SwingUtilities;
 
 import com.hideakin.mypics.gui.ImagePane;
 import com.hideakin.mypics.gui.component.SelectablePathTree;
-import com.hideakin.mypics.gui.component.SelectableThumbnailedPathTree;
+import com.hideakin.mypics.gui.model.DirectorySelectionTreeModel;
 import com.hideakin.mypics.gui.model.DuplicateFileSearchTreeModel;
 import com.hideakin.mypics.gui.model.SelectablePathTreeNode;
 import com.hideakin.mypics.gui.util.WorkInProgress;
@@ -41,17 +41,16 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 
 	private final JSplitPane _mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane _listPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-	private final SelectablePathTree _dTree = new SelectablePathTree();
+	private final SelectablePathTree _dTree = new SelectablePathTree(new DirectorySelectionTreeModel());
 	private final JPanel _dPane = new JPanel(new BorderLayout());
 	private final JLabel _dLabel = new JLabel("Target directories");
 	private final JScrollPane _dScroll = new JScrollPane(_dTree);
-	private final SelectableThumbnailedPathTree _fTree = new SelectableThumbnailedPathTree(new DuplicateFileSearchTreeModel());
+	private final SelectablePathTree _fTree = new SelectablePathTree(new DuplicateFileSearchTreeModel());
 	private final JPanel _fPane = new JPanel(new BorderLayout());
 	private final JLabel _fLabel = new JLabel("Duplicate files");
 	private final JScrollPane _fScroll = new JScrollPane(_fTree);
 	private final ImagePane _imagePane = ImagePane.create();
 	private final Map<String, PathNode> _hashes = new HashMap<>();
-	private final AtomicInteger _state = new AtomicInteger(0);
 	private final AtomicInteger _count = new AtomicInteger(0);
 	private Thread _background;
 
@@ -69,15 +68,17 @@ public class DuplicateFileSearchDialog extends ModalDialog {
         _dPane.add(_dScroll, BorderLayout.CENTER);
         _fPane.add(_fLabel, BorderLayout.NORTH);
         _fPane.add(_fScroll, BorderLayout.CENTER);
-		_buttons.testButton.setVisible(true);
-		_buttons.testButton.setEnabled(false);
+        _buttons.searchButton.setText("Search");
+		_buttons.searchButton.setMnemonic(KeyEvent.VK_S);
+		_buttons.searchButton.setVisible(true);
+		_buttons.searchButton.setEnabled(false);
 		_buttons.applyButton.setEnabled(false);
 		setSize(1200, 800);
         _dTree.onChanged(x -> {
         	_dTree.setSelected(x.path(), x.selected(), true);
-        	Path[] checked = _dTree.checked();
-        	_buttons.testButton.setEnabled(checked.length > 0);
-        	_dLabel.setText(checked.length > 0 ? String.format("Target directories: %d directories selected.", checked.length) : "Target directories");
+        	Path[] selected = _dTree.selectedPaths();
+        	_buttons.searchButton.setEnabled(selected.length > 0);
+        	_dLabel.setText(selected.length > 0 ? String.format("Target directories: %d directories selected.", selected.length) : "Target directories");
         });
 		_fTree.onSelected(x -> {
 			debug(3, "_fTree::onSelected: %s", x != null ? x.getClass().getName() : "null");
@@ -93,12 +94,33 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 		_dTree.loadDirectory(configuration.getDirectory());
 	}
 
-	private void run() {
+	@Override
+	public void search() {
+		debug(3, "DuplicateFileSearchDialog::search");
+		_fTree.root().removeAllChildren();
+		_fTree.model().reload();
+		_buttons.searchButton.setEnabled(false);
+		_buttons.applyButton.setEnabled(false);
+		_background = new Thread(() -> new WorkInProgress().run(() -> doSearch()));
+		_background.start();
+	}
+
+	@Override
+	public void apply() {
+		debug(3, "DuplicateFileSearchDialog::apply");
+		_buttons.searchButton.setEnabled(false);
+		_buttons.applyButton.setEnabled(false);
+		_background = new Thread(() -> new WorkInProgress().run(() -> doApply()));
+		_background.start();
+	}
+
+	private void doSearch() {
 		_hashes.clear();
 		_count.set(0);
-		Path[] checked = _dTree.checked();
+		Path[] checked = _dTree.selectedPaths();
 		if (!invokeLater(() -> {
 			_dLabel.setText(String.format("Target directories: %d directories selected.", checked.length));
+			_fLabel.setText("Duplicate files: Searching...");
 		})) return;
 		for (Path path : checked) {
 			if (_state.get() == -1) {
@@ -132,7 +154,7 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 				setTitle(String.format("Read %d files.", _count.get()));
 				_fLabel.setText(String.format("Duplicate files: No duplicate sets detected."));
 			}
-			_buttons.testButton.setEnabled(true);
+			_buttons.searchButton.setEnabled(true);
 		})) return;
 		if (duplicated == 0) {
 			return;
@@ -176,69 +198,46 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 		}
 	}
 
-	@Override
-	public void test() {
-		debug(3, "DuplicateFileSearchDialog::test");
-		_fTree.root().removeAllChildren();
-		_fTree.model().reload();
-		_buttons.testButton.setEnabled(false);
-		_buttons.applyButton.setEnabled(false);
-		_background = new Thread(() -> new WorkInProgress().run(() -> run()));
-		_background.start();
-	}
-
-	@Override
-	public void apply() {
-		debug(3, "DuplicateFileSearchDialog::apply");
-		new WorkInProgress().run(() -> {
-			List<Path> toBeRemoved = new ArrayList<>();
-			DuplicateFileSearchTreeModel model = (DuplicateFileSearchTreeModel)_fTree.model();
-			for (String key : model.keys()) {
-				SelectablePath[] paths = model.paths(key);
-				if (SelectablePath.countSelected(paths) == 0) {
-					debug(1, "%s Removing all files is not allowed for safety.", key);
-					continue;
+	private void doApply() {
+		List<Path> toBeRemoved = new ArrayList<>();
+		DuplicateFileSearchTreeModel model = (DuplicateFileSearchTreeModel)_fTree.model();
+		for (String key : model.keys()) {
+			SelectablePath[] paths = model.paths(key);
+			if (SelectablePath.countSelected(paths) == 0) {
+				debug(1, "%s Removing all files is not allowed for safety.", key);
+				continue;
+			}
+			for (SelectablePath next : paths) {
+				if (!next.selected()) {
+					debug(1, "TO BE DELETED: %s", next.path());
+					toBeRemoved.add(next.path());
+					model.removeKey(key);
 				}
-				for (SelectablePath next : paths) {
-					if (!next.selected()) {
-						debug(1, "TO BE DELETED: %s", next.path());
-						toBeRemoved.add(next.path());
-					}
-				}
-			}
-			if (toBeRemoved.size() > 0) {
-				fileManager.remove(toBeRemoved, e -> mainFrame.showErrorDialog(e));
-				mainFrame.reloadDirectory();
-			}
-		});
-		super.apply();
-	}
-
-	@Override
-	public void cancel() {
-		debug(3, "DuplicateFileSearchDialog::cancel");
-		_state.set(-1);
-		super.cancel();
-	}
-
-	private boolean invokeLater(Runnable x) {
-		while (!_state.compareAndSet(0, 1)) {
-			if (_state.get() == -1) {
-				return false;
-			}
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException ie) {
 			}
 		}
-		SwingUtilities.invokeLater(() -> {
-			try {
-				x.run();
-			} finally {
-				_state.compareAndSet(1, 0);
+		String[] keys = model.keys();
+		if (toBeRemoved.size() > 0) {
+			if (!invokeLater(() -> {
+				fileManager.remove(toBeRemoved, e -> mainFrame.showErrorDialog(e));
+				mainFrame.reloadDirectory();
+			})) return;
+			for (String key : keys) {
+				if (!invokeLater(() -> {
+					_fTree.expandNode(model.keyNode(key));
+				})) return;
 			}
-		});
-		return true;
+		}
+		int duplicated = keys.length;
+		if (!invokeLater(() -> {
+			if (duplicated > 0) {
+				_fLabel.setText(String.format("Duplicate files: %d %s remaining. Check to leave and uncheck to remove.", duplicated, duplicated > 1 ? "duplicate sets" : "duplicate set"));
+				_buttons.applyButton.setEnabled(true);
+			} else {
+				setTitle(String.format("Read %d files.", _count.get()));
+				_fLabel.setText(String.format("Duplicate files: No duplicate sets remaining."));
+			}
+			_buttons.searchButton.setEnabled(true);
+		})) return;
 	}
 
 }

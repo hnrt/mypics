@@ -28,7 +28,40 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 	}
 
 	public DefaultMutableTreeNode keyNode(String key) {
+		int n = _root.getChildCount();
+		if (n == 0) {
+			_keyNodes.clear();
+			return null;
+		}
 		return _keyNodes.get(key);
+	}
+
+	public MatchedFileTreeNode matchedFileNode(String key) {
+		int n = _root.getChildCount();
+		if (n == 0) {
+			_keyNodes.clear();
+			return null;
+		}
+		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
+		if (keyNode != null) {
+			return (MatchedFileTreeNode)keyNode.getChildAt(0);
+		} else {
+			return null;
+		}
+	}
+
+	public TargetDirectoryTreeNode targetDirectoryNode(String key) {
+		int n = _root.getChildCount();
+		if (n == 0) {
+			_keyNodes.clear();
+			return null;
+		}
+		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
+		if (keyNode != null) {
+			return (TargetDirectoryTreeNode)keyNode.getChildAt(1);
+		} else {
+			return null;
+		}
 	}
 
 	public List<Path> from(String key) {
@@ -99,6 +132,20 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 		_root.add(keyNode);
 	}
 
+	public void removeKey(String key) {
+		int n = _root.getChildCount();
+		if (n == 0) {
+			_keyNodes.clear();
+			return;
+		}
+		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
+		if (keyNode == null) {
+			return;
+		}
+		_keyNodes.remove(key);
+		_root.remove(keyNode);
+	}
+
 	public void addMatchedFile(String key, Path path) {
 		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
 		if (keyNode == null) {
@@ -143,7 +190,9 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 
 	public void reloadKey(String key) {
 		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
-		reload(keyNode);
+		if (keyNode != null) {
+			reload(keyNode);
+		}
 	}
 
 	public String[] keys() {

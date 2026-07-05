@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,16 +21,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 
 import com.hideakin.mypics.gui.ImagePane;
 import com.hideakin.mypics.gui.MultiImagePane;
 import com.hideakin.mypics.gui.component.SelectablePathTree;
-import com.hideakin.mypics.gui.component.SelectableThumbnailedPathTree;
+import com.hideakin.mypics.gui.model.DirectorySelectionTreeModel;
 import com.hideakin.mypics.gui.model.FileGroupSearchTreeModel;
 import com.hideakin.mypics.gui.model.MatchedFileTreeNode;
 import com.hideakin.mypics.gui.model.SelectablePathTreeNode;
+import com.hideakin.mypics.gui.model.TargetDirectoryTreeNode;
 import com.hideakin.mypics.gui.util.WorkInProgress;
 import com.hideakin.mypics.model.PathNode;
 import com.hideakin.mypics.model.SelectablePath;
@@ -52,20 +50,19 @@ public class FileGroupSearchDialog extends ModalDialog {
 	private final JTextField _patternEdit = new JTextField(configuration.getFileGroupPattern());
 	private final JPanel _sourcePane = new JPanel(new BorderLayout());
 	private final JLabel _sourceLabel = new JLabel("Source directories");
-	private final SelectablePathTree _sourceTree = new SelectablePathTree();
+	private final SelectablePathTree _sourceTree = new SelectablePathTree(new DirectorySelectionTreeModel());
 	private final JScrollPane _sourceScroll = new JScrollPane(_sourceTree);
 	private final JPanel _psPane = new JPanel(new BorderLayout());
 	private final JPanel _destinationPane = new JPanel(new BorderLayout());
 	private final JLabel _destinationLabel = new JLabel("Destination directories");
-	private final SelectablePathTree _destinationTree = new SelectablePathTree();
+	private final SelectablePathTree _destinationTree = new SelectablePathTree(new DirectorySelectionTreeModel());
 	private final JScrollPane _destinationScroll = new JScrollPane(_destinationTree);
 	private final JPanel _resultPane = new JPanel(new BorderLayout());
 	private final JLabel _resultLabel = new JLabel("File groups");
-	private final SelectableThumbnailedPathTree _resultTree = new SelectableThumbnailedPathTree(new FileGroupSearchTreeModel());
+	private final SelectablePathTree _resultTree = new SelectablePathTree(new FileGroupSearchTreeModel());
 	private final JScrollPane _resultScroll = new JScrollPane(_resultTree);
 	private final ImagePane _imagePane = ImagePane.create();
 	private final MultiImagePane _multiImagePane = MultiImagePane.create();
-	private final AtomicInteger _state = new AtomicInteger(0);
 	private final Map<String, PathNode> _sources = new HashMap<>();
 	private final Map<String, PathNode> _destinations = new HashMap<>();
 	private Pattern _pattern;
@@ -94,20 +91,20 @@ public class FileGroupSearchDialog extends ModalDialog {
 		_destinationPane.add(_destinationScroll, BorderLayout.CENTER);
 		_resultPane.add(_resultLabel, BorderLayout.NORTH);
 		_resultPane.add(_resultScroll, BorderLayout.CENTER);
-		_buttons.testButton.setVisible(true);
-		_buttons.testButton.setEnabled(false);
+		_buttons.searchButton.setVisible(true);
+		_buttons.searchButton.setEnabled(false);
 		_buttons.applyButton.setEnabled(false);
 		setSize(1200, 800);
 		_sourceTree.onChanged(x -> {
 			_sourceTree.setSelected(x.path(), x.selected(), true);
 			_destinationTree.setEnabled(x.path(), !x.selected(), true);
-			_buttons.testButton.setEnabled(_sourceTree.checked().length > 0 && _destinationTree.checked().length > 0);
+			_buttons.searchButton.setEnabled(_sourceTree.selectedPaths().length > 0 && _destinationTree.selectedPaths().length > 0);
 			_buttons.applyButton.setEnabled(false);
 		});
 		_destinationTree.onChanged(x -> {
 			_destinationTree.setSelected(x.path(), x.selected(), true);
 			_sourceTree.setEnabled(x.path(), !x.selected(), true);
-			_buttons.testButton.setEnabled(_sourceTree.checked().length > 0 && _destinationTree.checked().length > 0);
+			_buttons.searchButton.setEnabled(_sourceTree.selectedPaths().length > 0 && _destinationTree.selectedPaths().length > 0);
 			_buttons.applyButton.setEnabled(false);
 		});
 		_resultTree.onChanged(x -> {
@@ -117,10 +114,10 @@ public class FileGroupSearchDialog extends ModalDialog {
 			int loc = _basePane.getDividerLocation();
 			if (x instanceof SelectablePathTreeNode spNode) {
 				SelectablePath sp = spNode.selectablePath();
-				if (sp.type() == SelectablePath.REGULAR_FILE) {
+				if (sp.isRegularFile()) {
 					_basePane.setRightComponent(_imagePane);
 					_imagePane.loadFrom(sp.path());
-				} else if (sp.type() == SelectablePath.DIRECTORY) {
+				} else if (sp.isDirectory()) {
 					_basePane.setRightComponent(_multiImagePane);
 					try {
 						_multiImagePane.loadFrom(Files.list(sp.path()).filter(e -> Files.isRegularFile(e)).toList());
@@ -147,10 +144,45 @@ public class FileGroupSearchDialog extends ModalDialog {
 		_destinationTree.loadDirectory(configuration.getDirectory());
 	}
 
-	private void run() {
+	@Override
+	public void search() {
+		debug(3, "FileGroupSearchDialog::test");
+		try {
+			String text = _patternEdit.getText();
+			_pattern = Pattern.compile(text);
+			configuration.setFileGroupPattern(text);
+		} catch (Exception e) {
+			mainFrame.showErrorDialog("Bad search pattern: " + e.getMessage());
+			return;
+		}
+		int loc = _basePane.getDividerLocation();
+		_resultLabel.setText("File groups: Searching...");
+		_resultTree.root().removeAllChildren();
+		_resultTree.model().reload();
+		_basePane.setRightComponent(_imagePane);
+		_imagePane.loadFrom(null);
+		_buttons.searchButton.setEnabled(false);
+		_buttons.applyButton.setEnabled(false);
+		SwingUtilities.invokeLater(() -> _basePane.setDividerLocation(loc));
+		_background = new Thread(() -> new WorkInProgress().run(() -> doSearch()));
+		_background.start();
+	}
+
+	@Override
+	public void apply() {
+		debug(3, "FileGroupSearchDialog::apply");
+		_basePane.setRightComponent(_imagePane);
+		_imagePane.loadFrom(null);
+		_buttons.searchButton.setEnabled(false);
+		_buttons.applyButton.setEnabled(false);
+		_background = new Thread(() -> new WorkInProgress().run(() -> doApply()));
+		_background.start();
+	}
+
+	private void doSearch() {
 		_sources.clear();
 		_destinations.clear();
-		for (Path directory : _sourceTree.checked()) {
+		for (Path directory : _sourceTree.selectedPaths()) {
 			try {
 				Files.list(directory).filter(e -> Files.isRegularFile(e)).forEach(e -> {
 					String fileName = e.getFileName().toString();
@@ -170,7 +202,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 				e.printStackTrace();
 			}
 		}
-		for (Path directory : _destinationTree.checked()) {
+		for (Path directory : _destinationTree.selectedPaths()) {
 			try {
 				Files.list(directory).filter(e -> Files.isRegularFile(e)).forEach(e -> {
 					String fileName = e.getFileName().toString();
@@ -207,82 +239,40 @@ public class FileGroupSearchDialog extends ModalDialog {
 		invokeLater(() -> {
 			_resultLabel.setText(String.format("File groups: %d", keys.length));
 			_buttons.applyButton.setEnabled(true);
-			_buttons.testButton.setEnabled(true);
+			_buttons.searchButton.setEnabled(true);
 		});
 		for (String key : keys) {
-			DefaultMutableTreeNode node = model.keyNode(key);
+			TargetDirectoryTreeNode node = model.targetDirectoryNode(key);
 			invokeLater(() -> {
-				_resultTree.expandPath(new TreePath(node.getPath()));
+				_resultTree.expandNode(node);
 			});
 		}
 	}
 
-	@Override
-	public void test() {
-		debug(3, "FileGroupSearchDialog::test");
-		try {
-			String text = _patternEdit.getText();
-			_pattern = Pattern.compile(text);
-			configuration.setFileGroupPattern(text);
-		} catch (Exception e) {
-			mainFrame.showErrorDialog("Bad search pattern: " + e.getMessage());
-			return;
-		}
-		int loc = _basePane.getDividerLocation();
-		_resultLabel.setText("File groups: Searching...");
-		_resultTree.root().removeAllChildren();
-		_resultTree.model().reload();
-		_basePane.setRightComponent(_imagePane);
-		_imagePane.loadFrom(null);
-		_buttons.testButton.setEnabled(false);
-		_buttons.applyButton.setEnabled(false);
-		SwingUtilities.invokeLater(() -> _basePane.setDividerLocation(loc));
-		_background = new Thread(() -> new WorkInProgress().run(() -> run()));
-		_background.start();
-	}
-
-	@Override
-	public void apply() {
-		debug(3, "FileGroupSearchDialog::apply");
-		new WorkInProgress().run(() -> {
-			FileGroupSearchTreeModel model = (FileGroupSearchTreeModel)_resultTree.model();
-			for (String key : model.keys()) {
-				List<Path> from = model.from(key);
-				List<Path> to = model.to(key);
-				if (from.size() >= 1 && to.size() == 1) {
+	private void doApply() {
+		FileGroupSearchTreeModel model = (FileGroupSearchTreeModel)_resultTree.model();
+		for (String key : model.keys()) {
+			List<Path> from = model.from(key);
+			List<Path> to = model.to(key);
+			if (from.size() >= 1 && to.size() == 1) {
+				if (!invokeLater(() -> {
 					fileManager.move(from, to.get(0), e -> mainFrame.showErrorDialog(e));
-				}
-			}
-			mainFrame.reloadDirectory();
-		});
-		super.apply();
-	}
-
-	@Override
-	public void cancel() {
-		debug(3, "FileGroupSearchDialog::cancel");
-		_state.set(-1);
-		super.cancel();
-	}
-
-	private boolean invokeLater(Runnable x) {
-		while (!_state.compareAndSet(0, 1)) {
-			if (_state.get() == -1) {
-				return false;
-			}
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException ie) {
+				})) return;
+				model.removeKey(key);
 			}
 		}
-		SwingUtilities.invokeLater(() -> {
-			try {
-				x.run();
-			} finally {
-				_state.compareAndSet(1, 0);
-			}
-		});
-		return true;
+		String[] keys = model.keys();
+		if (!invokeLater(() -> {
+			mainFrame.reloadDirectory();
+			_buttons.searchButton.setEnabled(true);
+			_buttons.applyButton.setEnabled(keys.length > 0);
+		})) return;
+		for (String key : keys) {
+			TargetDirectoryTreeNode node = model.targetDirectoryNode(key);
+			invokeLater(() -> {
+				_resultTree.expandNode(node);
+			});
+		}
 	}
 
 }

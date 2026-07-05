@@ -52,6 +52,20 @@ public class DuplicateFileSearchTreeModel extends DefaultTreeModel {
 		_root.add(keyNode);
 	}
 
+	public void removeKey(String key) {
+		int n = _root.getChildCount();
+		if (n == 0) {
+			_keyNodes.clear();
+		}
+		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
+		if (keyNode == null) {
+			return;
+		}
+		_keyNodes.remove(key);
+		_root.remove(keyNode);
+		reload(_root);
+	}
+
 	public void addRegularFile(String key, Path path) {
 		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
 		if (keyNode == null) {

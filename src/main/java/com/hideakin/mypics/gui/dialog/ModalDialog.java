@@ -1,12 +1,16 @@
 package com.hideakin.mypics.gui.dialog;
 
+import static com.hideakin.mypics.Application.debug;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import com.hideakin.mypics.Application;
 
@@ -22,16 +26,16 @@ public class ModalDialog extends JDialog {
 			return new ButtonPanel(owner);
 		}
 
-		public final JButton testButton = new JButton("Test");
+		public final JButton searchButton = new JButton("Search");
 		public final JButton applyButton = new JButton("Apply");
 		public final JButton cancelButton = new JButton("Cancel");
 
 		private ButtonPanel(ModalDialog owner) {
 			super();
-			testButton.addActionListener(e -> {
-				owner.test();
+			searchButton.addActionListener(e -> {
+				owner.search();
 			});
-			testButton.setMnemonic(KeyEvent.VK_T);
+			searchButton.setMnemonic(KeyEvent.VK_S);
 			applyButton.addActionListener(e -> {
 				owner.apply();
 			});
@@ -40,15 +44,16 @@ public class ModalDialog extends JDialog {
 				owner.cancel();
 			});
 			cancelButton.setMnemonic(KeyEvent.VK_C);
-			add(testButton);
+			add(searchButton);
 	        add(applyButton);
 	        add(cancelButton);
-	        testButton.setVisible(false);
+	        searchButton.setVisible(false);
 		}
 		
 	}
 
 	protected final ButtonPanel _buttons;
+	protected final AtomicInteger _state = new AtomicInteger(0);
 
 	protected ModalDialog(String title) {
 		super(Application.mainFrame, title, true);
@@ -66,7 +71,7 @@ public class ModalDialog extends JDialog {
 		setVisible(true);
 	}
 
-	public void test() {
+	public void search() {
 	}
 
 	public void apply() {
@@ -75,7 +80,29 @@ public class ModalDialog extends JDialog {
 	}
 
 	public void cancel() {
+		debug(3, "ModalDialog::cancel");
+		_state.set(-1);
 		dispose();
+	}
+
+	protected boolean invokeLater(Runnable x) {
+		while (!_state.compareAndSet(0, 1)) {
+			if (_state.get() == -1) {
+				return false;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException ie) {
+			}
+		}
+		SwingUtilities.invokeLater(() -> {
+			try {
+				x.run();
+			} finally {
+				_state.compareAndSet(1, 0);
+			}
+		});
+		return _state.get() != -1;
 	}
 
 }

@@ -13,7 +13,7 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 	private static final long serialVersionUID = 2304548236329990350L;
 
 	public static SelectablePathTreeNode ofRoot() {
-		return new SelectablePathTreeNode(SelectablePath.ofDirectory(Path.of("[ROOT]"), false));
+		return new SelectablePathTreeNode(SelectablePath.ofRoot());
 	}
 
 	public static SelectablePathTreeNode ofDirectory(Path path, boolean selected) {
@@ -24,12 +24,56 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 		return new SelectablePathTreeNode(SelectablePath.ofRegularFile(path, selected));
 	}
 
-	protected SelectablePathTreeNode(Object userData) {
+	protected SelectablePathTreeNode(SelectablePath userData) {
 		super(userData);
+	}
+
+	public SelectablePathTreeNode child(int index) {
+		int n = getChildCount();
+		if (index < 0) {
+			index += n;
+		}
+		return (0 <= index) && (index < n) ? (SelectablePathTreeNode)getChildAt(index) : null;
 	}
 
 	public SelectablePath selectablePath() {
 		return (SelectablePath)getUserObject();
+	}
+
+	public Path path() {
+		return ((SelectablePath)getUserObject()).path();
+	}
+
+	public boolean has(Path path) {
+		return ((SelectablePath)getUserObject()).path().equals(path);
+	}
+
+	public boolean selected() {
+		return ((SelectablePath)getUserObject()).selected();
+	}
+
+	public void setSelected(boolean value) {
+		((SelectablePath)getUserObject()).setSelected(value);
+	}
+
+	public boolean enabled() {
+		return ((SelectablePath)getUserObject()).enabled();
+	}
+
+	public void setEnabled(boolean value) {
+		((SelectablePath)getUserObject()).setEnabled(value);
+	}
+
+	public boolean loaded() {
+		return ((SelectablePath)getUserObject()).loaded();
+	}
+
+	public void setLoaded(boolean value) {
+		((SelectablePath)getUserObject()).setLoaded(value);
+	}
+
+	public void addRegularFile(Path path, boolean selected) {
+		add(ofRegularFile(path, selected));
 	}
 
 	public void addDirectory(Path path, boolean selected) {
@@ -55,8 +99,10 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 	}
 
 	public SelectablePathTreeNode find(Path path) {
-		for (SelectablePathTreeNode child : getChildList()) {
-			if (child.selectablePath().path().equals(path)) {
+		int n = getChildCount();
+		for (int i = 0; i < n; i++) {
+			SelectablePathTreeNode child = (SelectablePathTreeNode)getChildAt(i);
+			if (child.has(path)) {
 				return child;
 			}
 			SelectablePathTreeNode found = child.find(path);
