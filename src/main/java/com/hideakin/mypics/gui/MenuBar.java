@@ -20,6 +20,7 @@ import com.hideakin.mypics.gui.dialog.MoveDestinationDialog;
 import com.hideakin.mypics.gui.dialog.PreferencesDialog;
 import com.hideakin.mypics.gui.dialog.TrashDialog;
 import com.hideakin.mypics.gui.util.ImageLoader;
+import com.hideakin.mypics.gui.util.Thumbnail;
 
 import static com.hideakin.mypics.Application.configuration;
 import static com.hideakin.mypics.Application.mainFrame;
@@ -298,6 +299,11 @@ public class MenuBar extends JMenuBar {
 		menu.addSeparator();
 		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility()));
 		menu.addCheckBoxMenuItem("Thumbnail", KeyEvent.VK_T, e -> findMenuItemByName("OptionsThumbnail").setSelected(mainFrame.listPane().toggleFileListCellRenderer()));
+		menu.addCheckBoxMenuItem("Thumbnail clipping", KeyEvent.VK_C, e -> {
+			configuration.setThumbnailClipping(!configuration.getThumbnailClipping());
+			findMenuItemByName("OptionsThumbnailClipping").setSelected(configuration.getThumbnailClipping());
+			Thumbnail.clipping = configuration.getThumbnailClipping();
+		});
 		menu.addSeparator();
 		menu.addMenuItem("Default size", KeyEvent.VK_D, e -> mainFrame.setDefaultSize());
 	}
@@ -328,6 +334,7 @@ public class MenuBar extends JMenuBar {
 		((MoveFileMenu)findMenuByName("EditMoveFile")).build();
 		findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().getDirectoryFilterTextFieldVisibility());
 		findMenuItemByName("OptionsThumbnail").setSelected(configuration.getFileListCellRenderer() != 0);
+		findMenuItemByName("OptionsThumbnailClipping").setSelected(configuration.getThumbnailClipping());
 		findMenuItemByName("EditUndo").setEnabled(fileManager.numberOfUndoes() > 0);
 	}
 

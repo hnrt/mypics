@@ -1,6 +1,5 @@
 package com.hideakin.mypics.gui;
 
-import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.nio.file.Path;
 import java.util.List;
@@ -10,6 +9,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import com.hideakin.mypics.Application;
+import com.hideakin.mypics.gui.component.CenteredIconLabel;
 import com.hideakin.mypics.gui.util.Thumbnail;
 
 public class MultiImagePane extends JScrollPane {
@@ -42,9 +42,8 @@ public class MultiImagePane extends JScrollPane {
 		_panel.setLayout(new GridLayout(rows, cols, 2, 2));
 		for (Path path : paths) {
 	    	Application.debug(3, "MultiImagePane::loadFrom: %s", path);
-	    	JLabel label = new JLabel();
+	    	JLabel label = new CenteredIconLabel(size);
 	    	label.setIcon(Thumbnail.of(path, size, icon -> label.setIcon(icon)));
-	    	label.setPreferredSize(new Dimension(size, size));
 	    	label.setToolTipText(path.getFileName().toString());
             _panel.add(label);
 		}

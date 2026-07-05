@@ -57,6 +57,7 @@ public class Configuration {
 		public Path trashDirectory = DEFAULT_TRASH_PATH;
 		public int fileListCellRenderer = 0;
 		public String fileGroupPattern = "";
+		public boolean thumbnailClipping = false;
 
 		public ConfigurationDocument() {
 			recent[0] = Path.of("").toAbsolutePath();
@@ -79,6 +80,7 @@ public class Configuration {
 			Application.debug(3, "ConfigurationDocument: trashDirectory=%s", trashDirectory);
 			Application.debug(3, "ConfigurationDocument: fileListCellRenderer=%d", fileListCellRenderer);
 			Application.debug(3, "ConfigurationDocument: fileGroupPattern=%s", fileGroupPattern);
+			Application.debug(3, "ConfigurationDocument: thumbnailClipping=%s", thumbnailClipping ? "true" : "false");
 		}
 
 	}
@@ -302,6 +304,14 @@ public class Configuration {
 
 	public void setFileGroupPattern(String value) {
 		_document.fileGroupPattern = value;
+	}
+
+	public boolean getThumbnailClipping() {
+		return _document.thumbnailClipping;
+	}
+
+	public void setThumbnailClipping(boolean value) {
+		_document.thumbnailClipping = value;
 	}
 
 }
