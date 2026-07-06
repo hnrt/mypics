@@ -41,11 +41,11 @@ public class DuplicateFileSearchDialog extends ModalDialog {
 
 	private final JSplitPane _mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane _listPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-	private final SelectablePathTree _dTree = new SelectablePathTree(new DirectorySelectionTreeModel());
+	private final SelectablePathTree _dTree = new SelectablePathTree(new DirectorySelectionTreeModel(), false);
 	private final JPanel _dPane = new JPanel(new BorderLayout());
 	private final JLabel _dLabel = new JLabel("Target directories");
 	private final JScrollPane _dScroll = new JScrollPane(_dTree);
-	private final SelectablePathTree _fTree = new SelectablePathTree(new DuplicateFileSearchTreeModel());
+	private final SelectablePathTree _fTree = new SelectablePathTree(new DuplicateFileSearchTreeModel(), true);
 	private final JPanel _fPane = new JPanel(new BorderLayout());
 	private final JLabel _fLabel = new JLabel("Duplicate files");
 	private final JScrollPane _fScroll = new JScrollPane(_fTree);

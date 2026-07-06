@@ -73,10 +73,24 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 	}
 
 	public void addRegularFile(Path path, boolean selected) {
+		int n = getChildCount();
+		for (int i = 0; i < n; i++) {
+			SelectablePathTreeNode node = (SelectablePathTreeNode)getChildAt(i);
+			if (node.has(path)) {
+				return;
+			}
+		}
 		add(ofRegularFile(path, selected));
 	}
 
 	public void addDirectory(Path path, boolean selected) {
+		int n = getChildCount();
+		for (int i = 0; i < n; i++) {
+			SelectablePathTreeNode node = (SelectablePathTreeNode)getChildAt(i);
+			if (node.has(path)) {
+				return;
+			}
+		}
 		add(ofDirectory(path, selected));
 	}
 

@@ -55,7 +55,7 @@ public class SelectablePathTreeCellEditor extends AbstractCellEditor implements 
         _checkBox.addActionListener(e -> {
             if (_current != null) {
                 _current.setSelected(_checkBox.isSelected());
-    			debug(4, "SelectablePathTreeCellEditor::SelectablePathTreeCellEditor: %s %s", _current.selected() ? "T" : "F", _current.path());
+    			debug(3, "SelectablePathTreeCellEditor::SelectablePathTreeCellEditor: %s %s", _current.selected() ? "T" : "F", _current.path());
     			if (_onChanged != null) {
     				_onChanged.accept(_current);
     			}
@@ -74,7 +74,7 @@ public class SelectablePathTreeCellEditor extends AbstractCellEditor implements 
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
         Object obj = node.getUserObject();
         if (obj instanceof SelectablePath sp) {
-			debug(4, "SelectablePathTreeCellEditor::getTreeCellEditorComponent: %s %s", sp.selected() ? "T" : "F", sp.path());
+			debug(3, "SelectablePathTreeCellEditor::getTreeCellEditorComponent: %s %s", sp.selected() ? "T" : "F", sp.path());
             _current = sp;
             _checkBox.setSelected(sp.selected());
             _checkBox.setEnabled(sp.enabled());

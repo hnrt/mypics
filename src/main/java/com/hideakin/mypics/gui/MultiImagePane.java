@@ -47,6 +47,8 @@ public class MultiImagePane extends JScrollPane {
 	    	label.setToolTipText(path.getFileName().toString());
             _panel.add(label);
 		}
+		_panel.revalidate();
+		_panel.repaint();
 	}
 
 }

@@ -188,6 +188,10 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 		}
 	}
 
+	public void reloadRoot() {
+		reload(_root);
+	}
+
 	public void reloadKey(String key) {
 		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
 		if (keyNode != null) {

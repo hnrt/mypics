@@ -15,7 +15,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 
-import com.hideakin.mypics.gui.model.DirectorySelectionTreeModel;
 import com.hideakin.mypics.gui.util.Thumbnail;
 import com.hideakin.mypics.model.SelectablePath;
 import static com.hideakin.mypics.Application.debug;
@@ -28,13 +27,18 @@ public class SelectablePathTreeCellRenderer extends JPanel implements TreeCellRe
 	private final JLabel _thumbnail = new JLabel();
 	private final JLabel _label = new JLabel();
 	private final DefaultTreeCellRenderer _defaultRenderer = new DefaultTreeCellRenderer();
+	private final boolean _highlight;
 	private final Map<Path, Icon> _icons;
 
 	public SelectablePathTreeCellRenderer() {
-		this(null);
+		this(true, null);
 	}
 
-	public SelectablePathTreeCellRenderer(Map<Path, Icon> icons) {
+	public SelectablePathTreeCellRenderer(boolean highlight) {
+		this(highlight, null);
+	}
+
+	public SelectablePathTreeCellRenderer(boolean highlight, Map<Path, Icon> icons) {
 		super();
 		setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
 		add(_checkBox);
@@ -44,6 +48,7 @@ public class SelectablePathTreeCellRenderer extends JPanel implements TreeCellRe
 		_checkBox.setOpaque(false);
 		_thumbnail.setOpaque(false);
 		_label.setOpaque(false);
+		_highlight = highlight;
 		_icons = icons;
 	}
 
@@ -52,7 +57,7 @@ public class SelectablePathTreeCellRenderer extends JPanel implements TreeCellRe
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
 		Object obj = node.getUserObject();
 		if (obj instanceof SelectablePath sp) {
-			debug(4, "SelectablePathTreeCellRenderer::getTreeCellRendererComponent: %s %s", sp.selected() ? "T" : "F", sp.path());
+			debug(3, "SelectablePathTreeCellRenderer::getTreeCellRendererComponent: %s %s", sp.selected() ? "T" : "F", sp.path());
 			_checkBox.setSelected(sp.selected());
 			_checkBox.setEnabled(sp.enabled());
             if (sp.isRegularFile()) {
@@ -69,16 +74,16 @@ public class SelectablePathTreeCellRenderer extends JPanel implements TreeCellRe
 				_thumbnail.setVisible(false);
             }
 			_label.setText(sp.path() != null ? sp.path().toString() : "");
-			if (tree.getModel() instanceof DirectorySelectionTreeModel) {
-				// DO NOT CARE
-			} else if (selected) {
-                setOpaque(true);
-                setBackground(_defaultRenderer.getBackgroundSelectionColor());
-                _label.setForeground(_defaultRenderer.getTextSelectionColor());
-            } else {
-                setOpaque(false);
-                _label.setForeground(_defaultRenderer.getTextNonSelectionColor());
-            }
+			if (_highlight) {
+				if (selected) {
+					setOpaque(true);
+					setBackground(_defaultRenderer.getBackgroundSelectionColor());
+					_label.setForeground(_defaultRenderer.getTextSelectionColor());
+				} else {
+					setOpaque(false);
+					_label.setForeground(_defaultRenderer.getTextNonSelectionColor());
+				}
+			}
 			return this;
 		} else {
 			return _defaultRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);

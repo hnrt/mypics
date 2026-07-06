@@ -37,9 +37,13 @@ public class SelectablePathTree extends JTree {
 	private final Map<Path, Icon> _icons = new HashMap<>(8192);
 
 	public SelectablePathTree(DefaultTreeModel model) {
+		this(model, true);
+	}
+
+	public SelectablePathTree(DefaultTreeModel model, boolean highlight) {
 		super(model);
 		setRootVisible(false);
-		setCellRenderer(new SelectablePathTreeCellRenderer(_icons));
+		setCellRenderer(new SelectablePathTreeCellRenderer(highlight, _icons));
 		setCellEditor(new SelectablePathTreeCellEditor(_icons, x -> _onChanged.invoke(x)));
 		setEditable(true);
 		_model = (DefaultTreeModel)super.getModel();
@@ -65,6 +69,7 @@ public class SelectablePathTree extends JTree {
 				    if (!sptn.loaded()) {
 				    	loadDirectory(sptn.path());
 				    }
+		        	_onSelected.invoke(sptn);
 			    }
 			} else {
 				TreePath path = e.getNewLeadSelectionPath();
