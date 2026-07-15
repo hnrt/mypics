@@ -29,11 +29,7 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 	}
 
 	public SelectablePathTreeNode child(int index) {
-		int n = getChildCount();
-		if (index < 0) {
-			index += n;
-		}
-		return (0 <= index) && (index < n) ? (SelectablePathTreeNode)getChildAt(index) : null;
+		return (SelectablePathTreeNode)getChildAt(index < 0 ? index + getChildCount() : index);
 	}
 
 	public SelectablePath selectablePath() {
@@ -73,32 +69,59 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 	}
 
 	public void addRegularFile(Path path, boolean selected) {
-		int n = getChildCount();
-		for (int i = 0; i < n; i++) {
-			SelectablePathTreeNode node = (SelectablePathTreeNode)getChildAt(i);
-			if (node.has(path)) {
-				return;
-			}
-		}
-		add(ofRegularFile(path, selected));
+		addChild(ofRegularFile(path, selected));
 	}
 
 	public void addDirectory(Path path, boolean selected) {
+		addChild(ofDirectory(path, selected));
+	}
+
+	private void addChild(SelectablePathTreeNode node) {
 		int n = getChildCount();
-		for (int i = 0; i < n; i++) {
-			SelectablePathTreeNode node = (SelectablePathTreeNode)getChildAt(i);
-			if (node.has(path)) {
+		int i = 0;
+		int j = n - 1;
+		while (i <= j) {
+			int m = (i + j) / 2;
+			int d = child(m).path().compareTo(node.path());
+			if (d < 0) {
+				i = m + 1;
+			} else if (d > 0) {
+				j = m - 1;
+			} else {
+				child(m).setEnabled(node.enabled());
 				return;
 			}
 		}
-		add(ofDirectory(path, selected));
+		if (i < n) {
+			insert(node, i);
+		} else {
+			add(node);
+		}
+	}
+
+	public void remove(Path path) {
+		int n = getChildCount();
+		int i = 0;
+		int j = n - 1;
+		while (i <= j) {
+			int m = (i + j) / 2;
+			int d = child(m).path().compareTo(path);
+			if (d < 0) {
+				i = m + 1;
+			} else if (d > 0) {
+				j = m - 1;
+			} else {
+				remove(m);
+				return;
+			}
+		}
 	}
 
 	public List<SelectablePathTreeNode> getChildList() {
 		List<SelectablePathTreeNode> list = new ArrayList<>();
 		int n = getChildCount();
 		for (int i = 0; i < n; i++) {
-			list.add((SelectablePathTreeNode)getChildAt(i));
+			list.add(child(i));
 		}
 		return list;
 	}
@@ -107,7 +130,7 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 		List<SelectablePath> list = new ArrayList<>();
 		int n = getChildCount();
 		for (int i = 0; i < n; i++) {
-			list.add(((SelectablePathTreeNode)getChildAt(i)).selectablePath());
+			list.add(child(i).selectablePath());
 		}
 		return list;
 	}
@@ -115,11 +138,12 @@ public class SelectablePathTreeNode extends DefaultMutableTreeNode {
 	public SelectablePathTreeNode find(Path path) {
 		int n = getChildCount();
 		for (int i = 0; i < n; i++) {
-			SelectablePathTreeNode child = (SelectablePathTreeNode)getChildAt(i);
-			if (child.has(path)) {
-				return child;
+			if (child(i).has(path)) {
+				return child(i);
 			}
-			SelectablePathTreeNode found = child.find(path);
+		}
+		for (int i = 0; i < n; i++) {
+			SelectablePathTreeNode found = child(i).find(path);
 			if (found != null) {
 				return found;
 			}

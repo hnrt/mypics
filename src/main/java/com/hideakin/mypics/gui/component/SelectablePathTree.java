@@ -114,6 +114,26 @@ public class SelectablePathTree extends JTree {
 		}
 	}
 
+	public void addDirectory(Path directory, boolean selected) {
+		if (_model instanceof DirectorySelectionTreeModel model) {
+			SelectablePathTreeNode node = model.find(directory.getParent());
+			node.addDirectory(directory, selected);
+			model.reload(node);
+		} else {
+			throw new RuntimeException("SelectablePathTree::addDirectory: Bad model.");
+		}
+	}
+
+	public void remove(Path path) {
+		if (_model instanceof DirectorySelectionTreeModel model) {
+			SelectablePathTreeNode node = model.find(path.getParent());
+			node.remove(path);
+			model.reload(node);
+		} else {
+			throw new RuntimeException("SelectablePathTree::addDirectory: Bad model.");
+		}
+	}
+
 	public boolean setSelected(Path path, boolean selected, boolean cascaded) {
 		if (_model instanceof DirectorySelectionTreeModel model) {
 			return model.setSelected(path, selected, cascaded);
@@ -147,6 +167,17 @@ public class SelectablePathTree extends JTree {
 	    	}
 		}
 		return null;
+	}
+
+	public void select(Path path) {
+		if (_root instanceof SelectablePathTreeNode root) {
+			SelectablePathTreeNode found = root.find(path);
+			if (found != null) {
+				setSelectionPath(new TreePath(found.getPath()));
+			}
+		} else {
+			throw new RuntimeException("SelectablePathTree::select: Bad model.");
+		}
 	}
 
 }

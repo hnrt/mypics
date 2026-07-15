@@ -122,13 +122,13 @@ public class FileGroupSearchDialog extends ModalDialog {
 		_sourceTree.onChanged(x -> {
 			_sourceTree.setSelected(x.path(), x.selected(), true);
 			_destinationTree.setEnabled(x.path(), !x.selected(), true);
-			_buttons.searchButton.setEnabled(_sourceTree.selectedPaths().length > 0 && _destinationTree.selectedPaths().length > 0);
+			_buttons.searchButton.setEnabled(_sourceTree.selectedPaths().length > 0);
 			_buttons.applyButton.setEnabled(false);
 		});
 		_destinationTree.onChanged(x -> {
 			_destinationTree.setSelected(x.path(), x.selected(), true);
 			_sourceTree.setEnabled(x.path(), !x.selected(), true);
-			_buttons.searchButton.setEnabled(_sourceTree.selectedPaths().length > 0 && _destinationTree.selectedPaths().length > 0);
+			_buttons.searchButton.setEnabled(_sourceTree.selectedPaths().length > 0);
 			_buttons.applyButton.setEnabled(false);
 		});
 		_resultTree.onChanged(x -> {
@@ -204,15 +204,21 @@ public class FileGroupSearchDialog extends ModalDialog {
 		    }
 		});
 		_targetDirectoryCreateMenuItem.addActionListener(e -> {
-			TreePath path = _targetDirectoryTree.getSelectionPath();
-			if (path != null && path.getLastPathComponent() instanceof SelectablePathTreeNode sptn) {
+			TreePath treePath = _targetDirectoryTree.getSelectionPath();
+			if (treePath != null && treePath.getLastPathComponent() instanceof SelectablePathTreeNode sptn) {
 				debug(3, "FileGroupSearchDialog::targetDirectoryCreateMenuItem: %s", sptn.path());
-				CreateDirectoryDialog dialog = CreateDirectoryDialog.create(sptn.path(), p -> {
-					debug(3, "FileGroupSearchDialog::targetDirectoryCreateMenuItem: new=%s", p);
+				CreateDirectoryDialog dialog = CreateDirectoryDialog.create(sptn.path(), path -> {
+					debug(3, "FileGroupSearchDialog::targetDirectoryCreateMenuItem: new=%s", path);
 					try {
-						Files.createDirectories(p);
-						sptn.addDirectory(p, false);
-						_targetDirectoryTree.model().reload(sptn);
+						if (Files.exists(path)) {
+							mainFrame.showErrorDialog("Already exists:\n\n" + path.toString());
+						} else {
+							Files.createDirectories(path);
+							_targetDirectoryTree.addDirectory(path, true);
+							_targetDirectoryTree.select(path);
+							_targetDirectoryNode.replaceWith(_targetDirectoryTree.selectedPaths());
+							_resultTree.expandNode(_targetDirectoryNode);
+						}
 					} catch (Exception ex) {
 						mainFrame.showErrorDialog(ex);
 					}
@@ -221,15 +227,17 @@ public class FileGroupSearchDialog extends ModalDialog {
 			}
 		});
 		_targetDirectoryRenameMenuItem.addActionListener(e -> {
-			TreePath path = _targetDirectoryTree.getSelectionPath();
-			if (path != null && path.getLastPathComponent() instanceof SelectablePathTreeNode sptn) {
+			TreePath treePath = _targetDirectoryTree.getSelectionPath();
+			if (treePath != null && treePath.getLastPathComponent() instanceof SelectablePathTreeNode sptn) {
 				debug(3, "FileGroupSearchDialog::targetDirectoryRenameMenuItem: %s", sptn.path());
-				RenameDirectoryDialog dialog = RenameDirectoryDialog.create(sptn.path(), p -> {
-					debug(3, "FileGroupSearchDialog::targetDirectoryRenameMenuItem: new=%s", p);
+				RenameDirectoryDialog dialog = RenameDirectoryDialog.create(sptn.path(), path -> {
+					debug(3, "FileGroupSearchDialog::targetDirectoryRenameMenuItem: new=%s", path);
 					try {
-						Files.move(sptn.path(), p);
-						sptn.setUserObject(SelectablePath.ofDirectory(p, false));
-						_targetDirectoryTree.model().reload(sptn);
+						Files.move(sptn.path(), path);
+						_targetDirectoryTree.remove(sptn.path());
+						_targetDirectoryTree.addDirectory(path, sptn.selected());
+						_targetDirectoryNode.replaceWith(_targetDirectoryTree.selectedPaths());
+						_resultTree.expandNode(_targetDirectoryNode);
 					} catch (Exception ex) {
 						mainFrame.showErrorDialog(ex);
 					}
@@ -246,6 +254,8 @@ public class FileGroupSearchDialog extends ModalDialog {
 					SelectablePathTreeNode parentNode = (SelectablePathTreeNode)sptn.getParent();
 					parentNode.remove(sptn);
 					_targetDirectoryTree.model().reload(parentNode);
+					_targetDirectoryNode.replaceWith(_targetDirectoryTree.selectedPaths());
+					_resultTree.expandNode(_targetDirectoryNode);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					mainFrame.showErrorDialog(String.format("Failed to delete directory.\n\n%s", sptn.path()));

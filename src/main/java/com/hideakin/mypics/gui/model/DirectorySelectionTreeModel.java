@@ -5,9 +5,7 @@ import static com.hideakin.mypics.Application.debug;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.tree.DefaultTreeModel;
 
@@ -27,7 +25,7 @@ public class DirectorySelectionTreeModel extends DefaultTreeModel {
 	}
 
 	public SelectablePathTreeNode find(Path path) {
-		return _root.find(path);
+		return path == null || path.getParent() == null ? _root : _root.find(path);
 	}
 
 	public void loadDirectory(Path directory) {
@@ -40,17 +38,14 @@ public class DirectorySelectionTreeModel extends DefaultTreeModel {
 		}
 	}
 
-	private void loadSubdirectories(Path directory, SelectablePathTreeNode spTreeNode) {
-		if (!spTreeNode.loaded()) {
-			spTreeNode.setLoaded(true);
+	private void loadSubdirectories(Path directory, SelectablePathTreeNode treeNode) {
+		if (!treeNode.loaded()) {
+			treeNode.setLoaded(true);
 			debug(3, "DirectorySelectionTreeModel::loadSubdirectories: %s", directory);
 			try {
-				List<Path> entries = Files.list(directory).toList();
-				List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
-				dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
-				for (Path path : dd) {
-					spTreeNode.addDirectory(path, false);
-				}
+				Files.list(directory).filter(e -> Files.isDirectory(e)).forEach(path -> {
+					treeNode.addDirectory(path, false);
+				});
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

@@ -2,14 +2,11 @@ package com.hideakin.mypics.gui;
 
 import java.awt.BorderLayout;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -128,20 +125,12 @@ public class ListPane extends JSplitPane {
 				if (_directoryFilterText == null) {
 					saveDirectoryListState(directory);
 				}
-				List<Path> entries = Files.list(directory).filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
 				if (text.length() == 0) {
-					List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
-					dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
-					_directoryListModel.clear();
-					_directoryListModel.addParentDirectory(directory);
-					_directoryListModel.addAll(dd);
+					_directoryListModel.loadFrom(directory);
 					_directoryFilterText = null;
 					restoreDirectoryListState(directory);
 				} else {
-					List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e) && e.getFileName().toString().toLowerCase().contains(text)).collect(Collectors.toList());
-					dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
-					_directoryListModel.clear();
-					_directoryListModel.addAll(dd);
+					_directoryListModel.loadFrom(directory, text);
 					_directoryFilterText = text;
 				}
 			} catch (Exception e) {
@@ -164,17 +153,10 @@ public class ListPane extends JSplitPane {
 				_directoryFilterTextField.setText("");
 				_directoryFilterText = null;
 				saveDirectoryListState(configuration.getDirectory());
-				List<Path> entries = Files.list(directory).toList();
-				List<Path> dd = entries.stream().filter(e -> Files.isDirectory(e)).collect(Collectors.toList());
-				List<Path> ff = entries.stream().filter(e -> Files.isRegularFile(e)).collect(Collectors.toList());
-				dd.sort(Comparator.comparing(e -> e.getFileName().toString()));
-				ff.sort(Comparator.comparing(e -> e.getFileName().toString()));
 				configuration.setDirectory(directory);
-				_fileListModel.clear();
-				_directoryListModel.clear();
-				_directoryListModel.addParentDirectory(directory);
-				_directoryListModel.addAll(dd);
-				_fileListModel.addAll(ff);
+				_directoryListModel.loadFrom(directory);
+				_fileListModel.loadFrom(directory);
+				_fileList.adjustSize();
 				restoreDirectoryListState(directory);
 				if (selection instanceof Integer index) {
 					_fileList.select(index);
@@ -254,18 +236,18 @@ public class ListPane extends JSplitPane {
 		if (paths.contains(selected)) {
 			int index = _fileList.getSelectedIndex();
 			_fileList.clearSelection();
-			_fileListModel.removeElements(paths);
+			_fileListModel.remove(paths);
 			_fileList.select(index);
 			_onFileSelected.invoke(_fileList.getSelectedValue());
 		} else {
-			_fileListModel.removeElements(paths);
+			_fileListModel.remove(paths);
 		}
 	}
 
 	public void addFiles(List<Path> paths) {
 		Path selected = _fileList.getSelectedValue();
 		_fileList.clearSelection();
-		_fileListModel.addElements(paths);
+		_fileListModel.add(paths);
 		_fileList.select(selected);
 	}
 

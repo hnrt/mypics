@@ -228,4 +228,8 @@ public class FileList extends JList<Path> {
         select(target);
     }
 
+    public void adjustSize() {
+    	_thumbnailRenderer.adjustSize(_model);
+    }
+
 }

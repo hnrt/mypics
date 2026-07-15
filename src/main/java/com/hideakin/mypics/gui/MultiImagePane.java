@@ -29,23 +29,24 @@ public class MultiImagePane extends JScrollPane {
 
 	public void clear() {
 		_panel.removeAll();
+		_panel.revalidate();
+		_panel.repaint();
 	}
 
 	public void loadFrom(List<Path> paths) {
 		_panel.removeAll();
-		if (paths.size() == 0) {
-			return;
-		}
-		int size = Thumbnail.BIG_SIZE;
-		int cols = 4;
-		int rows = (paths.size() + cols - 1) / cols;
-		_panel.setLayout(new GridLayout(rows, cols, 2, 2));
-		for (Path path : paths) {
-	    	Application.debug(3, "MultiImagePane::loadFrom: %s", path);
-	    	JLabel label = new CenteredIconLabel(size);
-	    	label.setIcon(Thumbnail.of(path, size, icon -> label.setIcon(icon)));
-	    	label.setToolTipText(path.getFileName().toString());
-            _panel.add(label);
+		if (paths.size() > 0) {
+			int size = Thumbnail.BIG_SIZE;
+			int cols = 4;
+			int rows = (paths.size() + cols - 1) / cols;
+			_panel.setLayout(new GridLayout(rows, cols, 2, 2));
+			for (Path path : paths) {
+				Application.debug(3, "MultiImagePane::loadFrom: %s", path);
+				JLabel label = new CenteredIconLabel(size);
+				label.setIcon(Thumbnail.of(path, size, icon -> label.setIcon(icon)));
+				label.setToolTipText(path.getFileName().toString());
+				_panel.add(label);
+			}
 		}
 		_panel.revalidate();
 		_panel.repaint();

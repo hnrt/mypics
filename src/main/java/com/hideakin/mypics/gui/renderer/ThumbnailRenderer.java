@@ -2,6 +2,7 @@ package com.hideakin.mypics.gui.renderer;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Rectangle;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 	private final JLabel _iconLabel = new JLabel();
 	private final JLabel _nameLabel = new JLabel();
 	private final Map<Path, Icon> _iconCache = new HashMap<>(1024);
+	private int _size = Integer.MAX_VALUE;
 
 	public ThumbnailRenderer() {
 		setLayout(new BorderLayout(10, 0));
@@ -39,9 +41,13 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 			boolean cellHasFocus) {
 		_nameLabel.setText(value.getFileName().toString());
 		Icon icon = Thumbnail.of(value, _iconCache, iconLoaded -> {
-			_iconLabel.setIcon(iconLoaded);
-			if (list.getModel() instanceof FileListModel flm) {
-				flm.set(index, flm.getElementAt(index));
+			if (_iconCache.size() < _size) {
+				Rectangle r = list.getCellBounds(index, index);
+				list.repaint(r);
+			} else if (list.getModel() instanceof FileListModel model) {
+				Application.debug(3, "ThumbnailRenderer::getListCellRendererComponent: size adjustment");
+				_size = Integer.MAX_VALUE;
+				model.set(0, model.get(0));
 			}
 		});
 		_iconLabel.setIcon(icon);
@@ -59,6 +65,18 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 	public void clearCache() {
 		Application.debug(3, "ThumbnailRenderer::clearCache");
 		_iconCache.clear();
+		_size = Integer.MAX_VALUE;
+	}
+
+	public void adjustSize(FileListModel model) {
+		int size = model.getSize();
+		Application.debug(3, "ThumbnailRenderer::adjustSize: cache=%d list=%d", _iconCache.size(), size);
+		if (_iconCache.size() < size) {
+			_size = size;
+		} else if (size > 0) {
+			_size = Integer.MAX_VALUE;
+			model.set(0, model.get(0));
+		}
 	}
 
 }

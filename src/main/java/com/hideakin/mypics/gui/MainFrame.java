@@ -146,9 +146,7 @@ public class MainFrame extends JFrame {
 
 		_listPane.onDirectoryChanged(path -> {
 			Application.debug(3, "listPane.onDirectoryChanged(%s)", path);
-			setTitle(String.format("%s", path));
-			_listPane.loadFrom(path);
-			_menuBar.update();
+			loadDirectoryFrom(path);
 		});
 		_listPane.onFileSelected(path -> {
 			Application.debug(3, "listPane.onFileSelected(%s)", path);
@@ -192,11 +190,15 @@ public class MainFrame extends JFrame {
 	}
 
 	public void loadDirectoryFrom(Path path) {
+		setTitle(String.format("%s", path));
 		_listPane.loadFrom(path);
+		_menuBar.update();
 	}
 
 	public void loadDirectoryFrom(Path path, int index) {
+		setTitle(String.format("%s", path));
 		_listPane.loadFrom(path, index);
+		_menuBar.update();
 	}
 
 	public void loadPreviousSiblingDirectory() {
