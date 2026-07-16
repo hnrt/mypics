@@ -77,7 +77,7 @@ public class DirectoryListModel extends DefaultListModel<Path> {
 			int d = list.get(m).compareTo(path);
 			if (d < 0) {
 				i = m + 1;
-			} else if (d < 0) {
+			} else if (d > 0) {
 				j = m - 1;
 			} else {
 				return;
@@ -95,7 +95,7 @@ public class DirectoryListModel extends DefaultListModel<Path> {
 			int d = get(m).compareTo(path);
 			if (d < 0) {
 				i = m + 1;
-			} else if (d < 0) {
+			} else if (d > 0) {
 				j = m - 1;
 			} else {
 				return;

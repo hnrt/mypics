@@ -385,6 +385,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 					fileManager.move(from, to.get(0), e -> mainFrame.showErrorDialog(e));
 				})) return;
 				model.removeKey(key);
+				model.reload(model.root());
 			}
 		}
 		String[] keys = model.keys();

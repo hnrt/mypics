@@ -76,7 +76,7 @@ public class FileListModel extends AbstractListModel<Path> {
 			int d = _list.get(m).compareTo(path);
 			if (d < 0) {
 				i = m + 1;
-			} else if (d < 0) {
+			} else if (d > 0) {
 				j = m - 1;
 			} else {
 				return -1;
@@ -129,7 +129,7 @@ public class FileListModel extends AbstractListModel<Path> {
 			int d = _list.get(m).compareTo(path);
 			if (d < 0) {
 				i = m + 1;
-			} else if (d < 0) {
+			} else if (d > 0) {
 				j = m - 1;
 			} else {
 				return m;
