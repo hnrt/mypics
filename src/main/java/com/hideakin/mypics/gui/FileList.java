@@ -18,8 +18,9 @@ import javax.swing.SwingUtilities;
 
 import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.model.FileListModel;
-import com.hideakin.mypics.gui.renderer.FileNameRenderer;
-import com.hideakin.mypics.gui.renderer.ThumbnailRenderer;
+import com.hideakin.mypics.gui.renderer.PathListCellRenderer;
+
+import static com.hideakin.mypics.Application.configuration;
 
 public class FileList extends JList<Path> {
 
@@ -49,8 +50,7 @@ public class FileList extends JList<Path> {
 	private static final String UNDO = "undo";
 	private static final String EDIT = "edit";
 
-	private final FileNameRenderer _fileNameRenderer = new FileNameRenderer();
-	private final ThumbnailRenderer _thumbnailRenderer = new ThumbnailRenderer();
+	private final PathListCellRenderer _listCellRenderer = new PathListCellRenderer();
 	private final JTextField _editor = new JTextField();
 	private int _editingIndex = -1;
 	private BiFunction<Path, String, Path> _onCommitRenaming;
@@ -59,8 +59,9 @@ public class FileList extends JList<Path> {
 	private FileList(FileListModel model) {
 		super(model);
 		_model = model;
-		setCellRenderer(Application.configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER ? _thumbnailRenderer : _fileNameRenderer);
-		_model.onClear(() -> _thumbnailRenderer.clearCache());
+		setCellRenderer(_listCellRenderer);
+		_listCellRenderer.enableThumbnail(configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER);
+		_model.onClear(() -> _listCellRenderer.clearCache());
 		InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), CTRL0);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), CTRL1);
@@ -168,8 +169,8 @@ public class FileList extends JList<Path> {
 	}
 
 	public void setCellRenderer(int renderer) {
-		Application.configuration.setFileListCellRenderer(renderer);
-		setCellRenderer(Application.configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER ? _thumbnailRenderer : _fileNameRenderer);
+		configuration.setFileListCellRenderer(renderer);
+		_listCellRenderer.enableThumbnail(configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER);
 		SwingUtilities.invokeLater(() -> {
 			int selected = getSelectedIndex();
 			if (selected > -1) {
@@ -229,7 +230,7 @@ public class FileList extends JList<Path> {
     }
 
     public void adjustSize() {
-    	_thumbnailRenderer.adjustSize(_model);
+    	_listCellRenderer.adjustSize(_model);
     }
 
 }

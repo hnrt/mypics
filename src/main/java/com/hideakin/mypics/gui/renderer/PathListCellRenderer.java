@@ -17,7 +17,7 @@ import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.model.FileListModel;
 import com.hideakin.mypics.gui.util.Thumbnail;
 
-public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> {
+public class PathListCellRenderer extends JPanel implements ListCellRenderer<Path> {
 
 	private static final long serialVersionUID = 3421207696253706378L;
 
@@ -25,32 +25,35 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 	private final JLabel _nameLabel = new JLabel();
 	private final Map<Path, Icon> _iconCache = new HashMap<>(1024);
 	private int _size = Integer.MAX_VALUE;
+	private boolean _thumbnailEnabled = true;
 
-	public ThumbnailRenderer() {
+	public PathListCellRenderer() {
+		this(true);
+	}
+
+	public PathListCellRenderer(boolean thumbnailEnabled) {
 		setLayout(new BorderLayout(10, 0));
 		add(_iconLabel, BorderLayout.WEST);
 		add(_nameLabel, BorderLayout.CENTER);
+		enableThumbnail(thumbnailEnabled);
 	}
 
 	@Override
-	public Component getListCellRendererComponent(
-			JList<? extends Path> list,
-			Path value,
-			int index,
-			boolean isSelected,
-			boolean cellHasFocus) {
+	public Component getListCellRendererComponent(JList<? extends Path> list, Path value, int index, boolean isSelected, boolean cellHasFocus) {
 		_nameLabel.setText(value.getFileName().toString());
-		Icon icon = Thumbnail.of(value, _iconCache, iconLoaded -> {
-			if (_iconCache.size() < _size) {
-				Rectangle r = list.getCellBounds(index, index);
-				list.repaint(r);
-			} else if (list.getModel() instanceof FileListModel model) {
-				Application.debug(3, "ThumbnailRenderer::getListCellRendererComponent: size adjustment");
-				_size = Integer.MAX_VALUE;
-				model.set(0, model.get(0));
-			}
-		});
-		_iconLabel.setIcon(icon);
+		if (_thumbnailEnabled) {
+			Icon icon = Thumbnail.of(value, _iconCache, iconLoaded -> {
+				if (_iconCache.size() < _size) {
+					Rectangle r = list.getCellBounds(index, index);
+					list.repaint(r);
+				} else if (list.getModel() instanceof FileListModel model) {
+					Application.debug(3, "PathListCellRenderer::getListCellRendererComponent: size adjustment");
+					_size = Integer.MAX_VALUE;
+					model.set(0, model.get(0));
+				}
+			});
+			_iconLabel.setIcon(icon);
+		}
 		if (isSelected) {
 			setBackground(list.getSelectionBackground());
 			setForeground(list.getSelectionForeground());
@@ -62,15 +65,20 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer<Path> 
 		return this;
 	}
 
+	public void enableThumbnail(boolean enabled) {
+		_thumbnailEnabled = enabled;
+		_iconLabel.setVisible(enabled);
+	}
+
 	public void clearCache() {
-		Application.debug(3, "ThumbnailRenderer::clearCache");
+		Application.debug(3, "PathListCellRenderer::clearCache");
 		_iconCache.clear();
 		_size = Integer.MAX_VALUE;
 	}
 
 	public void adjustSize(FileListModel model) {
 		int size = model.getSize();
-		Application.debug(3, "ThumbnailRenderer::adjustSize: cache=%d list=%d", _iconCache.size(), size);
+		Application.debug(3, "PathListCellRenderer::adjustSize: cache=%d list=%d", _iconCache.size(), size);
 		if (_iconCache.size() < size) {
 			_size = size;
 		} else if (size > 0) {

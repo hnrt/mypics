@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import javax.swing.JList;
 
 import com.hideakin.mypics.gui.model.DirectoryListModel;
-import com.hideakin.mypics.gui.renderer.FileNameRenderer;
+import com.hideakin.mypics.gui.renderer.PathListCellRenderer;
 
 public class DirectoryList extends JList<Path> {
 
@@ -16,7 +16,7 @@ public class DirectoryList extends JList<Path> {
 
 	private DirectoryList(DirectoryListModel model) {
 		super(model);
-		setCellRenderer(new FileNameRenderer());
+		setCellRenderer(new PathListCellRenderer(false));
 	}
 
 }
