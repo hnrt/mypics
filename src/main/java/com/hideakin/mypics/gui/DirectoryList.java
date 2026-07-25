@@ -2,7 +2,6 @@ package com.hideakin.mypics.gui;
 
 import java.nio.file.Path;
 import javax.swing.JList;
-
 import com.hideakin.mypics.gui.model.DirectoryListModel;
 import com.hideakin.mypics.gui.renderer.PathListCellRenderer;
 

@@ -14,21 +14,17 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 
 import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.model.FileListModel;
 import com.hideakin.mypics.gui.renderer.PathListCellRenderer;
 
-import static com.hideakin.mypics.Application.configuration;
-
 public class FileList extends JList<Path> {
 
 	public static final int FIRST = 0;
 	public static final int LAST = -1;
-
-	public static final int SIMPLE_RENDERER = 0;
-	public static final int THUMBNAIL_RENDERER = 1;
 	
 	private static final long serialVersionUID = 5229274496231891006L;
 
@@ -50,17 +46,16 @@ public class FileList extends JList<Path> {
 	private static final String UNDO = "undo";
 	private static final String EDIT = "edit";
 
-	private final PathListCellRenderer _listCellRenderer = new PathListCellRenderer();
+	private final PathListCellRenderer _listCellRenderer = new PathListCellRenderer(false);
 	private final JTextField _editor = new JTextField();
 	private int _editingIndex = -1;
 	private BiFunction<Path, String, Path> _onCommitRenaming;
-	private final FileListModel _model;
+	private FileListModel _model;
 
 	private FileList(FileListModel model) {
 		super(model);
 		_model = model;
 		setCellRenderer(_listCellRenderer);
-		_listCellRenderer.enableThumbnail(configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER);
 		_model.onClear(() -> _listCellRenderer.clearCache());
 		InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), CTRL0);
@@ -168,15 +163,24 @@ public class FileList extends JList<Path> {
         add(_editor);
 	}
 
-	public void setCellRenderer(int renderer) {
-		configuration.setFileListCellRenderer(renderer);
-		_listCellRenderer.enableThumbnail(configuration.getFileListCellRenderer() == THUMBNAIL_RENDERER);
-		SwingUtilities.invokeLater(() -> {
-			int selected = getSelectedIndex();
-			if (selected > -1) {
-				ensureIndexIsVisible(selected);
-			}
-		});
+	@Override
+	public void setModel(ListModel<Path> model) {
+		super.setModel(model);
+		if (model instanceof FileListModel fileListModel) {
+			_model = fileListModel;
+		} else {
+			throw new RuntimeException("FileList::setModel: Bad model.");
+		}
+	}
+
+	public boolean isThumbnailEnabled() {
+		return _listCellRenderer.isThumbnailEnabled();
+	}
+
+	public void enableThumbnail(boolean enabled) {
+		_listCellRenderer.enableThumbnail(enabled);
+		revalidate();
+		repaint();
 	}
 
 	public void select(Path path) {

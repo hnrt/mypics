@@ -40,9 +40,10 @@ public class FileListModel extends AbstractListModel<Path> {
 
 	public void clear() {
 		int end = _list.size() - 1;
-		if (end < 0) return;
-		_list.clear();
-		fireIntervalRemoved(this, 0, end);
+		if (end >= 0) {
+			_list.clear();
+			fireIntervalRemoved(this, 0, end);
+		}
 		_onClear.invoke();
 	}
 
@@ -59,31 +60,16 @@ public class FileListModel extends AbstractListModel<Path> {
 
 	public void loadFrom(Path directory) {
 		try {
-			clear();
+			int sizeBefore = _list.size();
+			if (sizeBefore > 0) {
+				_list.clear();
+			}
+			_onClear.invoke();
 			Files.list(directory).filter(path -> Files.isRegularFile(path)).forEach(path -> add(path));
-			if (_list.size() > 0) fireIntervalAdded(this, 0, _list.size() - 1);
+			notify(sizeBefore);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	private int add(Path path) {
-		int n = _list.size();
-		int i = 0;
-		int j = n - 1;
-		while (i <= j) {
-			int m = (i + j) / 2;
-			int d = _list.get(m).compareTo(path);
-			if (d < 0) {
-				i = m + 1;
-			} else if (d > 0) {
-				j = m - 1;
-			} else {
-				return -1;
-			}
-		}
-		_list.add(i, path);
-		return i;
 	}
 
 	public void add(List<Path> paths) {
@@ -99,7 +85,9 @@ public class FileListModel extends AbstractListModel<Path> {
 			int i = find(path);
 			if (i >= 0) toBeRemoved.add(i);
 		}
-		if (toBeRemoved.size() == 0) return;
+		if (toBeRemoved.size() == 0) {
+			return;
+		}
 		toBeRemoved.sort(Integer::compareTo);
 		int start = -1;
 		int end = -1;
@@ -120,7 +108,42 @@ public class FileListModel extends AbstractListModel<Path> {
 		fireIntervalRemoved(this, start, end);
 	}
 
-	private int find(Path path) {
+	public void copyFrom(FileListModel source) {
+		copyFrom(source._list);
+	}
+
+	public void copyFrom(FileListModel source, String filterBy) {
+		copyFrom(source._list.stream().filter(e -> e.getFileName().toString().toLowerCase().contains(filterBy)).toList());
+	}
+
+	protected void copyFrom(List<Path> source) {
+		int sizeBefore = _list.size();
+		_list.clear();
+		_onClear.invoke();
+		_list.addAll(source);
+		notify(sizeBefore);
+	}
+
+	protected int add(Path path) {
+		int n = _list.size();
+		int i = 0;
+		int j = n - 1;
+		while (i <= j) {
+			int m = (i + j) / 2;
+			int d = _list.get(m).compareTo(path);
+			if (d < 0) {
+				i = m + 1;
+			} else if (d > 0) {
+				j = m - 1;
+			} else {
+				return -1;
+			}
+		}
+		_list.add(i, path);
+		return i;
+	}
+
+	protected int find(Path path) {
 		int n = _list.size();
 		int i = 0;
 		int j = n - 1;
@@ -136,6 +159,27 @@ public class FileListModel extends AbstractListModel<Path> {
 			}
 		}
 		return -1;
+	}
+
+	protected void notify(int sizeBefore) {
+		int sizeAfter = _list.size();
+		if (sizeAfter > 0) {
+			if (sizeBefore > 0) {
+				if (sizeBefore < sizeAfter) {
+					fireIntervalRemoved(this, sizeBefore, sizeAfter - 1);
+					fireContentsChanged(this, 0, sizeBefore - 1);
+				} else if (sizeAfter < sizeBefore) {
+					fireIntervalRemoved(this, sizeAfter, sizeBefore - 1);
+					fireContentsChanged(this, 0, sizeAfter - 1);
+				} else {
+					fireContentsChanged(this, 0, sizeAfter - 1);
+				}
+			} else {
+				fireIntervalAdded(this, 0, sizeAfter - 1);
+			}
+		} else if (sizeBefore > 0) {
+			fireIntervalRemoved(this, 0, sizeBefore - 1);
+		}
 	}
 
 }

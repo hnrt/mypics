@@ -298,7 +298,7 @@ public class MenuBar extends JMenuBar {
 		menu.addMenuItem("Preferences...", KeyEvent.VK_P, e -> PreferencesDialog.create().showDialog());
 		menu.addSeparator();
 		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility()));
-		menu.addCheckBoxMenuItem("Thumbnail", KeyEvent.VK_T, e -> findMenuItemByName("OptionsThumbnail").setSelected(mainFrame.listPane().toggleFileListCellRenderer()));
+		menu.addCheckBoxMenuItem("Thumbnail", KeyEvent.VK_T, e -> findMenuItemByName("OptionsThumbnail").setSelected(mainFrame.listPane().toggleFileListThumbnail()));
 		menu.addCheckBoxMenuItem("Thumbnail clipping", KeyEvent.VK_C, e -> {
 			configuration.setThumbnailClipping(!configuration.getThumbnailClipping());
 			findMenuItemByName("OptionsThumbnailClipping").setSelected(configuration.getThumbnailClipping());
