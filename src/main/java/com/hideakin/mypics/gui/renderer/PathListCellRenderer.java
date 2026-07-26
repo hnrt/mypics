@@ -13,9 +13,10 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
-import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.model.FileListModel;
 import com.hideakin.mypics.gui.util.Thumbnail;
+
+import static com.hideakin.mypics.Application.debug;
 
 public class PathListCellRenderer extends JPanel implements ListCellRenderer<Path> {
 
@@ -26,6 +27,7 @@ public class PathListCellRenderer extends JPanel implements ListCellRenderer<Pat
 	private final Map<Path, Icon> _iconCache = new HashMap<>(1024);
 	private int _size = Integer.MAX_VALUE;
 	private boolean _thumbnailEnabled = true;
+	private Runnable _callback = null;
 
 	public PathListCellRenderer() {
 		this(true);
@@ -40,6 +42,7 @@ public class PathListCellRenderer extends JPanel implements ListCellRenderer<Pat
 
 	@Override
 	public Component getListCellRendererComponent(JList<? extends Path> list, Path value, int index, boolean isSelected, boolean cellHasFocus) {
+		debug(3, "PathListCellRenderer::getListCellRendererComponent(%s)", value);
 		Path fileName = value.getFileName(); 
 		if (fileName != null) {
 			_nameLabel.setText(fileName.toString());
@@ -49,9 +52,14 @@ public class PathListCellRenderer extends JPanel implements ListCellRenderer<Pat
 						Rectangle r = list.getCellBounds(index, index);
 						list.repaint(r);
 					} else if (list.getModel() instanceof FileListModel model) {
-						Application.debug(3, "PathListCellRenderer::getListCellRendererComponent: size adjustment");
+						debug(3, "PathListCellRenderer::getListCellRendererComponent: size adjustment");
 						_size = Integer.MAX_VALUE;
 						model.set(0, model.get(0));
+						Runnable callback = _callback;
+						_callback = null;
+						if (callback != null) {
+							callback.run();
+						}
 					}
 				});
 				_iconLabel.setIcon(icon);
@@ -84,19 +92,23 @@ public class PathListCellRenderer extends JPanel implements ListCellRenderer<Pat
 	}
 
 	public void clearCache() {
-		Application.debug(3, "PathListCellRenderer::clearCache");
+		debug(3, "PathListCellRenderer::clearCache");
 		_iconCache.clear();
 		_size = Integer.MAX_VALUE;
+		_callback = null;
 	}
 
-	public void adjustSize(FileListModel model) {
+	public void adjustSize(FileListModel model, Runnable callback) {
 		int size = model.getSize();
-		Application.debug(3, "PathListCellRenderer::adjustSize: cache=%d list=%d", _iconCache.size(), size);
+		debug(3, "PathListCellRenderer::adjustSize: cache=%d list=%d", _iconCache.size(), size);
 		if (_iconCache.size() < size) {
 			_size = size;
+			_callback = callback;
 		} else if (size > 0) {
+			debug(3, "PathListCellRenderer::adjustSize: size adjustment");
 			_size = Integer.MAX_VALUE;
 			model.set(0, model.get(0));
+			callback.run();
 		}
 	}
 

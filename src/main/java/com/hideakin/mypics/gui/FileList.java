@@ -1,5 +1,6 @@
 package com.hideakin.mypics.gui;
 
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
@@ -20,6 +21,8 @@ import javax.swing.SwingUtilities;
 import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.model.FileListModel;
 import com.hideakin.mypics.gui.renderer.PathListCellRenderer;
+
+import static com.hideakin.mypics.Application.debug;
 
 public class FileList extends JList<Path> {
 
@@ -45,6 +48,7 @@ public class FileList extends JList<Path> {
 	private static final String DELETE = "delete";
 	private static final String UNDO = "undo";
 	private static final String EDIT = "edit";
+	private static final String DESELECT = "deselect";
 
 	private final PathListCellRenderer _listCellRenderer = new PathListCellRenderer(false);
 	private final JTextField _editor = new JTextField();
@@ -56,7 +60,7 @@ public class FileList extends JList<Path> {
 		super(model);
 		_model = model;
 		setCellRenderer(_listCellRenderer);
-		_model.onClear(() -> _listCellRenderer.clearCache());
+		_model.onCleared(() -> _listCellRenderer.clearCache());
 		InputMap im = getInputMap(JComponent.WHEN_FOCUSED);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK), CTRL0);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), CTRL1);
@@ -71,6 +75,7 @@ public class FileList extends JList<Path> {
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DELETE);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK), UNDO);
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), EDIT);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), DESELECT);
         ActionMap am = getActionMap();
         am.put(CTRL0, new AbstractAction() {
             @Override
@@ -150,6 +155,12 @@ public class FileList extends JList<Path> {
             	Application.startRenaming();
             }
         });
+        am.put(DESELECT, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	FileList.this.clearSelection();
+            }
+        });
         _editor.setVisible(false);
 		_editor.addActionListener(e -> finishRenaming(true));
 		_editor.addKeyListener(new KeyAdapter() {
@@ -208,7 +219,7 @@ public class FileList extends JList<Path> {
 	public void startRenaming(BiFunction<Path, String, Path> cb) {
 		_editingIndex = getSelectedIndex();
 		if (_editingIndex < 0) return;
-		java.awt.Rectangle cellBounds = getCellBounds(_editingIndex, _editingIndex);
+		Rectangle cellBounds = getCellBounds(_editingIndex, _editingIndex);
 		if (cellBounds == null) return;
 		_editor.setText(_model.get(_editingIndex).getFileName().toString());
 		_editor.setBounds(cellBounds);
@@ -234,7 +245,13 @@ public class FileList extends JList<Path> {
     }
 
     public void adjustSize() {
-    	_listCellRenderer.adjustSize(_model);
+    	_listCellRenderer.adjustSize(_model, () -> {
+    		int selectedIndex = getSelectedIndex();
+    		if (selectedIndex >= 0) {
+    			ensureIndexIsVisible(selectedIndex);
+        		debug(3, "FileList::adjust: ensureIndexIsVisible(%d)", selectedIndex);
+    		}
+    	});
     }
 
 }

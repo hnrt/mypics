@@ -33,8 +33,8 @@ public class DirectoryListPane extends JPanel {
 	protected final JScrollPane _scrollPane = new JScrollPane(_directoryList);
 	protected final ConsumerList<Path> _onSelected = new ConsumerList<>();
 	protected final Map<Path, Integer> _firstLines = new HashMap<>();
-	protected Path _directory = null;
 	protected final DirectoryListModel _filteredListModel = DirectoryListModel.create();
+	protected Path _directory = null;
 	protected String _filterBy = null;
 
 	protected DirectoryListPane() {
@@ -66,6 +66,10 @@ public class DirectoryListPane extends JPanel {
 		_onSelected.add(callback);
 	}
 
+	public Path directory() {
+		return _directory;
+	}
+
 	public void loadFrom(Path directory) {
 		inProcessing.run(() -> {
 			_filteringTextField.setText("");
@@ -80,7 +84,7 @@ public class DirectoryListPane extends JPanel {
 
 	protected void select(Path directory) {
     	inProcessing.runExclusively(() -> {
-    		debug(3, "directoryList.Selection");
+    		debug(3, "DirectoryListPane::select(%s)", directory);
     		if (directory != null) {
     			Path actual = _directoryListModel.isParentDirectory(directory) ? _directory.getParent() : directory;
     			_onSelected.invoke(actual);

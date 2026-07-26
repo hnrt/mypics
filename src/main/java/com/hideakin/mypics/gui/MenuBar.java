@@ -297,7 +297,8 @@ public class MenuBar extends JMenuBar {
 		menu.addMenuItem("Move destinations...", KeyEvent.VK_M, e -> MoveDestinationDialog.create().showDialog());
 		menu.addMenuItem("Preferences...", KeyEvent.VK_P, e -> PreferencesDialog.create().showDialog());
 		menu.addSeparator();
-		menu.addCheckBoxMenuItem("Filter directory", KeyEvent.VK_F, e -> findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().toggleDirectoryFilterTextFieldVisibility()));
+		menu.addCheckBoxMenuItem("Filter directories", KeyEvent.VK_D, e -> findMenuItemByName("OptionsFilterDirectories").setSelected(mainFrame.listPane().toggleDirectoryFilteringTextFieldVisibility()));
+		menu.addCheckBoxMenuItem("Filter files", KeyEvent.VK_F, e -> findMenuItemByName("OptionsFilterFiles").setSelected(mainFrame.listPane().toggleFileFilteringTextFieldVisibility()));
 		menu.addCheckBoxMenuItem("Thumbnail", KeyEvent.VK_T, e -> findMenuItemByName("OptionsThumbnail").setSelected(mainFrame.listPane().toggleFileListThumbnail()));
 		menu.addCheckBoxMenuItem("Thumbnail clipping", KeyEvent.VK_C, e -> {
 			configuration.setThumbnailClipping(!configuration.getThumbnailClipping());
@@ -332,13 +333,15 @@ public class MenuBar extends JMenuBar {
 	public void update() {
 		((OpenDirectoryMenu)findMenuByName("FileOpenDirectory")).build();
 		((MoveFileMenu)findMenuByName("EditMoveFile")).build();
-		findMenuItemByName("OptionsFilterDirectory").setSelected(mainFrame.listPane().getDirectoryFilterTextFieldVisibility());
-		findMenuItemByName("OptionsThumbnail").setSelected(configuration.getFileListCellRenderer() != 0);
+		findMenuItemByName("OptionsFilterDirectories").setSelected(mainFrame.listPane().getDirectoryFilteringTextFieldVisibility());
+		findMenuItemByName("OptionsFilterFiles").setSelected(mainFrame.listPane().getFileFilteringTextFieldVisibility());
+		findMenuItemByName("OptionsThumbnail").setSelected(configuration.getThumbnailEnabled());
 		findMenuItemByName("OptionsThumbnailClipping").setSelected(configuration.getThumbnailClipping());
 		findMenuItemByName("EditUndo").setEnabled(fileManager.numberOfUndoes() > 0);
 	}
 
 	public void enablePath(boolean enabled) {
+		findMenuItemByName("EditRename").setEnabled(enabled);
 		findMenuByName("EditMoveFile").setEnabled(enabled);
 		findMenuItemByName("EditCopyPath").setEnabled(enabled);
 		findMenuItemByName("EditMoveFile").setEnabled(enabled);

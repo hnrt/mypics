@@ -3,10 +3,13 @@ package com.hideakin.mypics.gui;
 import static com.hideakin.mypics.Application.inProcessing;
 
 import java.awt.BorderLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import javax.swing.JPanel;
@@ -15,10 +18,11 @@ import javax.swing.JViewport;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.component.TextField;
 import com.hideakin.mypics.gui.model.FileListModel;
 import com.hideakin.mypics.util.function.ConsumerList;
+
+import static com.hideakin.mypics.Application.debug;
 
 public class FileListPane extends JPanel {
 
@@ -34,8 +38,8 @@ public class FileListPane extends JPanel {
 	protected final JScrollPane _scrollPane = new JScrollPane(_fileList);
 	protected final ConsumerList<Path> _onSelected = new ConsumerList<>();
 	protected final Map<Path, Path> _selectedFiles = new HashMap<>();
+	protected final FileListModel _filteredListModel = FileListModel.create();
 	protected Path _directory = null;
-	protected final FileListModel _filteredFileListModel = FileListModel.create();
 	protected String _filterBy = null;
 	protected int _firstLine = -1;
 
@@ -48,7 +52,6 @@ public class FileListPane extends JPanel {
             	select(_fileList.getSelectedValue());
             }
 		});
-		_fileListModel.onClear(() -> Application.fileManager.clear());
 		_filteringTextField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
@@ -65,12 +68,16 @@ public class FileListPane extends JPanel {
 		});
 	}
 
-	public FileList fileList() {
-		return _fileList;
+	public void onCleared(Runnable callback) {
+		_fileListModel.onCleared(callback);
 	}
 
-	public void onFileSelected(Consumer<Path> callback) {
+	public void onSelected(Consumer<Path> callback) {
 		_onSelected.add(callback);
+	}
+
+	public int numberOfFiles() {
+		return _fileList.getModel().getSize();
 	}
 
 	public void loadFrom(Path directory, Object selection) {
@@ -86,6 +93,8 @@ public class FileListPane extends JPanel {
 				Path previouslySelected = _selectedFiles.get(directory);
 				if (previouslySelected != null) {
 					_fileList.select(previouslySelected);
+				} else {
+					_fileList.clearSelection();
 				}
 			}
 			_onSelected.invoke(_fileList.getSelectedValue());
@@ -112,19 +121,19 @@ public class FileListPane extends JPanel {
 		}
 	}
 
-	public boolean getFilterTextFieldVisibility() {
+	public boolean getFilteringTextFieldVisibility() {
 		return _filteringTextField.isVisible();
 	}
 
-	public void setFilterTextFieldVisibility(boolean show) {
+	public void setFilteringTextFieldVisibility(boolean show) {
 		_filteringTextField.setVisible(show);
 		revalidate();
 		repaint();
 	}
 
-	public boolean toggleFilterTextFieldVisibility() {
-		setFilterTextFieldVisibility(!getFilterTextFieldVisibility());
-		return getFilterTextFieldVisibility();
+	public boolean toggleFilteringTextFieldVisibility() {
+		setFilteringTextFieldVisibility(!getFilteringTextFieldVisibility());
+		return getFilteringTextFieldVisibility();
 	}
 
 	public void enableThumbnail(boolean enabled) {
@@ -141,7 +150,7 @@ public class FileListPane extends JPanel {
 
 	protected void select(Path path) {
     	inProcessing.runExclusively(() -> {
-    		Application.debug(3, "fileList.Selection");
+    		debug(3, "FileListPane::select(%s)", path);
     		_selectedFiles.put(_directory, path);
     		_onSelected.invoke(path);
     	});
@@ -155,40 +164,49 @@ public class FileListPane extends JPanel {
 			}
 			Path selected = _fileList.getSelectedValue();
 			if (_filterBy == null) {
-				int n = _fileListModel.getSize();
-				if (n > 0) {
-					_firstLine = _fileList.getFirstVisibleIndex();
-				} else {
-					_firstLine = -1;
-				}
-				_filteredFileListModel.clear();
-				_fileList.setModel(_filteredFileListModel);
+				saveListState();
+				_filteredListModel.clear();
+				_fileList.setModel(_filteredListModel);
 			}
 			if (text.length() > 0) {
-				_filteredFileListModel.copyFrom(_fileListModel, text);
+				_filteredListModel.copyFrom(_fileListModel, text);
 				_fileList.adjustSize();
 				_filterBy = text;
 			} else {
 				_fileList.setModel(_fileListModel);
 				_fileList.adjustSize();
 				_filterBy = null;
-				if (_firstLine > -1) {
-					java.awt.Rectangle rect = _fileList.getCellBounds(_firstLine, _firstLine);
-					if (rect != null) {
-						JViewport viewport = _scrollPane.getViewport();
-						java.awt.Point position = new java.awt.Point(0, rect.y);
-						viewport.setViewPosition(position);
-					}
-				}
+				restoreListState();
 			}
 			if (selected != null) {
 				_fileList.setSelectedValue(selected, true);
-				if (_fileList.getSelectedValue() != selected) {
-					_fileList.clearSelection();
-					_onSelected.invoke(null);
-				}
 			}
+			_onSelected.invoke(_fileList.getSelectedValue());
 		});
+	}
+
+	private void saveListState() {
+		int n = _fileListModel.getSize();
+		if (n > 0) {
+			_firstLine = _fileList.getFirstVisibleIndex();
+		} else {
+			_firstLine = -1;
+		}
+	}
+
+	private void restoreListState() {
+		if (_firstLine > -1) {
+			Rectangle rect = _fileList.getCellBounds(_firstLine, _firstLine);
+			if (rect != null) {
+				JViewport viewport = _scrollPane.getViewport();
+				Point position = new java.awt.Point(0, rect.y);
+				viewport.setViewPosition(position);
+			}
+		}
+	}
+
+	public void startRenaming(BiFunction<Path, String, Path> callback) {
+		_fileList.startRenaming(callback);
 	}
 
 }

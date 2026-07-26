@@ -118,7 +118,7 @@ public class Application {
 	}
 
 	public static void startRenaming() {
-		mainFrame.startRenaming((source, fileName) -> {
+		mainFrame.startFileRenaming((source, fileName) -> {
 			return fileManager.rename(source, fileName, e -> mainFrame.showErrorDialog(e));
 		});
 	}

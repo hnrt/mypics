@@ -4,8 +4,6 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
 import java.nio.file.Path;
-import java.util.function.Consumer;
-
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -13,7 +11,7 @@ import javax.swing.JScrollPane;
 import com.hideakin.mypics.Application;
 import com.hideakin.mypics.gui.util.ImageCache;
 import com.hideakin.mypics.gui.util.ImageLoader;
-import com.hideakin.mypics.util.function.ConsumerList;
+import com.hideakin.mypics.util.function.RunnableList;
 
 import static com.hideakin.mypics.Application.configuration;
 
@@ -29,7 +27,7 @@ public class ImagePane extends JScrollPane {
 	private BufferedImage _image;
 	private Path _path;
     private double _scale = 1.0;
-    private ConsumerList<ImagePane> _onChanged = new ConsumerList<>();
+    private RunnableList _onChanged = new RunnableList();
     private ImageCache _cache = new ImageCache();
 
 	private ImagePane() {
@@ -57,7 +55,7 @@ public class ImagePane extends JScrollPane {
 		return _scale;
 	}
 
-	public void onChanged(Consumer<ImagePane> callback) {
+	public void onChanged(Runnable callback) {
 		_onChanged.add(callback);
 	}
 
@@ -65,7 +63,7 @@ public class ImagePane extends JScrollPane {
 		_path = null;
 		_scale = 1.0;
 		_imageLabel.setIcon(null);
-		_onChanged.invoke(this);
+		_onChanged.invoke();
     }
 
     public void loadFrom(Path path) {
@@ -104,7 +102,7 @@ public class ImagePane extends JScrollPane {
         Image scaled = _image.getScaledInstance(rect.width, rect.height, Image.SCALE_SMOOTH);
         _imageLabel.setIcon(new ImageIcon(scaled));
         _imageLabel.revalidate();
-		_onChanged.invoke(this);
+		_onChanged.invoke();
     }
 
 }

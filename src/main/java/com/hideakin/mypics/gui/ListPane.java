@@ -2,14 +2,14 @@ package com.hideakin.mypics.gui;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import javax.swing.JSplitPane;
 
 import static com.hideakin.mypics.Application.configuration;
 import static com.hideakin.mypics.Application.inProcessing;
-
-import com.hideakin.mypics.Configuration;
+import static com.hideakin.mypics.Configuration.DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION;
 
 public class ListPane extends JSplitPane {
 
@@ -28,40 +28,44 @@ public class ListPane extends JSplitPane {
 		setBottomComponent(_fileListPane);
 		setDividerLocation(configuration.getListVerticalDividerLocation());
 		_directoryListPane.setFilteringTextFieldVisibility(configuration.getDirectoryFilterVisibility());
-		_fileListPane.setFilterTextFieldVisibility(true);
-		_fileListPane.enableThumbnail(configuration.getFileListCellRenderer() != 0);
+		_fileListPane.setFilteringTextFieldVisibility(configuration.getFileFilterVisibility());
+		_fileListPane.enableThumbnail(configuration.getThumbnailEnabled());
 		addPropertyChangeListener("dividerLocation", e -> configuration.setListVerticalDividerLocation((int)e.getNewValue()));
 	}
 
-	public void onDirectoryChanged(Consumer<Path> callback) {
+	public void onDirectorySelected(Consumer<Path> callback) {
 		_directoryListPane.onSelected(callback);
 	}
 
+	public void onFileCleared(Runnable callback) {
+		_fileListPane.onCleared(callback);
+	}
+
 	public void onFileSelected(Consumer<Path> callback) {
-		_fileListPane.onFileSelected(callback);
+		_fileListPane.onSelected(callback);
 	}
 
-	public FileList fileList() {
-		return _fileListPane.fileList();
+	public Path directory() {
+		return _directoryListPane.directory();
 	}
 
-	public void loadFrom(Path directory) {
-		loadFrom(directory, null);
+	public int numberOfFiles() {
+		return _fileListPane.numberOfFiles();
 	}
 
-	public void loadFrom(Path directory, int selection) {
-		loadFrom(directory, Integer.valueOf(selection));
+	public void loadDirectoryFrom(Path directory) {
+		loadDirectoryFrom(directory, null);
 	}
 
-	public void loadFrom(Path directory, Object selection) {
+	public void loadDirectoryFrom(Path directory, int selection) {
+		loadDirectoryFrom(directory, Integer.valueOf(selection));
+	}
+
+	public void loadDirectoryFrom(Path directory, Object selection) {
 		inProcessing.run(() -> {
-			try {
-				configuration.setDirectory(directory);
-				_directoryListPane.loadFrom(directory);
-				_fileListPane.loadFrom(directory, selection);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			configuration.setDirectory(directory);
+			_directoryListPane.loadFrom(directory);
+			_fileListPane.loadFrom(directory, selection);
 		});
 	}
 
@@ -81,31 +85,35 @@ public class ListPane extends JSplitPane {
 		return _fileListPane.getSelectedFiles();
 	}
 
-	public boolean getDirectoryFilterTextFieldVisibility() {
+	public boolean getDirectoryFilteringTextFieldVisibility() {
 		return _directoryListPane.getFilteringTextFieldVisibility();
 	}
 
-	public void setDirectoryFilterTextFieldVisibility(boolean show) {
-		_directoryListPane.setFilteringTextFieldVisibility(show);
-		configuration.setDirectoryFilterVisibility(show);
+	public boolean toggleDirectoryFilteringTextFieldVisibility() {
+		return _directoryListPane.toggleFilteringTextFieldVisibility();
 	}
 
-	public boolean toggleDirectoryFilterTextFieldVisibility() {
-		setDirectoryFilterTextFieldVisibility(!getDirectoryFilterTextFieldVisibility());
-		return getDirectoryFilterTextFieldVisibility();
+	public boolean getFileFilteringTextFieldVisibility() {
+		return _fileListPane.getFilteringTextFieldVisibility();
+	}
+
+	public boolean toggleFileFilteringTextFieldVisibility() {
+		return _fileListPane.toggleFilteringTextFieldVisibility();
 	}
 
 	public boolean toggleFileListThumbnail() {
-		int value = configuration.getFileListCellRenderer() ^ 1;
-		configuration.setFileListCellRenderer(value);
-		boolean enabled = value != 0;
-		_fileListPane.enableThumbnail(enabled);
-		return enabled;
+		configuration.setThumbnailEnabled(!configuration.getThumbnailEnabled());
+		_fileListPane.enableThumbnail(configuration.getThumbnailEnabled());
+		return configuration.getThumbnailEnabled();
 	}
 
 	public void setDefaultSize() {
-		configuration.setListVerticalDividerLocation(Configuration.DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION);
+		configuration.setListVerticalDividerLocation(DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION);
 		setDividerLocation(configuration.getListVerticalDividerLocation());
+	}
+
+	public void startFileRenaming(BiFunction<Path, String, Path> callback) {
+		_fileListPane.startRenaming(callback);
 	}
 
 }

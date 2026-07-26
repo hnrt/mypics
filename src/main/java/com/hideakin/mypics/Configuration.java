@@ -54,10 +54,11 @@ public class Configuration {
 		public int horizontalDividerLocation = DEFAULT_HORIZONTAL_DIVIDER_LOCATION;
 		public int listVerticalDividerLocation = DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION;
 		public boolean directoryFilterVisibility = true;
+		public boolean fileFilterVisibility = true;
 		public Path trashDirectory = DEFAULT_TRASH_PATH;
-		public int fileListCellRenderer = 0;
-		public String fileGroupPattern = "";
+		public boolean thumbnailEnabled = false;
 		public boolean thumbnailClipping = false;
+		public String fileGroupPattern = "";
 
 		public ConfigurationDocument() {
 			recent[0] = Path.of("").toAbsolutePath();
@@ -76,11 +77,12 @@ public class Configuration {
 			Application.debug(3, "ConfigurationDocument: moveFileInterval=%d", moveFileInterval);
 			Application.debug(3, "ConfigurationDocument: horizontalDividerLocation=%d", horizontalDividerLocation);
 			Application.debug(3, "ConfigurationDocument: listVerticalDividerLocation=%d", listVerticalDividerLocation);
-			Application.debug(3, "ConfigurationDocument: filterDirectoryVisibility=%s", directoryFilterVisibility ? "true" : "false");
+			Application.debug(3, "ConfigurationDocument: directoryFilterDirectoryVisibility=%s", directoryFilterVisibility ? "true" : "false");
+			Application.debug(3, "ConfigurationDocument: fileFilterDirectoryVisibility=%s", fileFilterVisibility ? "true" : "false");
 			Application.debug(3, "ConfigurationDocument: trashDirectory=%s", trashDirectory);
-			Application.debug(3, "ConfigurationDocument: fileListCellRenderer=%d", fileListCellRenderer);
-			Application.debug(3, "ConfigurationDocument: fileGroupPattern=%s", fileGroupPattern);
+			Application.debug(3, "ConfigurationDocument: thumbnailEnabled=%s", thumbnailEnabled ? "true" : "false");
 			Application.debug(3, "ConfigurationDocument: thumbnailClipping=%s", thumbnailClipping ? "true" : "false");
+			Application.debug(3, "ConfigurationDocument: fileGroupPattern=%s", fileGroupPattern);
 		}
 
 	}
@@ -282,6 +284,14 @@ public class Configuration {
 		_document.directoryFilterVisibility = value;
 	}
 
+	public boolean getFileFilterVisibility() {
+		return _document.fileFilterVisibility;
+	}
+
+	public void setFileFilterVisibility(boolean value) {
+		_document.fileFilterVisibility = value;
+	}
+
 	public Path getTrashDirectory() {
 		return _document.trashDirectory;
 	}
@@ -290,20 +300,12 @@ public class Configuration {
 		_document.trashDirectory = value;
 	}
 
-	public int getFileListCellRenderer() {
-		return _document.fileListCellRenderer;
+	public boolean getThumbnailEnabled() {
+		return _document.thumbnailEnabled;
 	}
 
-	public void setFileListCellRenderer(int value) {
-		_document.fileListCellRenderer = value;
-	}
-
-	public String getFileGroupPattern() {
-		return _document.fileGroupPattern;
-	}
-
-	public void setFileGroupPattern(String value) {
-		_document.fileGroupPattern = value;
+	public void setThumbnailEnabled(boolean value) {
+		_document.thumbnailEnabled = value;
 	}
 
 	public boolean getThumbnailClipping() {
@@ -312,6 +314,14 @@ public class Configuration {
 
 	public void setThumbnailClipping(boolean value) {
 		_document.thumbnailClipping = value;
+	}
+
+	public String getFileGroupPattern() {
+		return _document.fileGroupPattern;
+	}
+
+	public void setFileGroupPattern(String value) {
+		_document.fileGroupPattern = value;
 	}
 
 }

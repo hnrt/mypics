@@ -18,7 +18,7 @@ public class FileListModel extends AbstractListModel<Path> {
 	}
 
 	private final List<Path> _list = new ArrayList<>();
-	private final RunnableList _onClear = new RunnableList();
+	private final RunnableList _onCleared = new RunnableList();
 
 	private FileListModel() {
 		super();
@@ -34,8 +34,8 @@ public class FileListModel extends AbstractListModel<Path> {
 		return _list.get(index);
 	}
 
-	public void onClear(Runnable cb) {
-		_onClear.add(cb);
+	public void onCleared(Runnable cb) {
+		_onCleared.add(cb);
 	}
 
 	public void clear() {
@@ -44,7 +44,7 @@ public class FileListModel extends AbstractListModel<Path> {
 			_list.clear();
 			fireIntervalRemoved(this, 0, end);
 		}
-		_onClear.invoke();
+		_onCleared.invoke();
 	}
 
 	public Path get(int index) {
@@ -64,7 +64,7 @@ public class FileListModel extends AbstractListModel<Path> {
 			if (sizeBefore > 0) {
 				_list.clear();
 			}
-			_onClear.invoke();
+			_onCleared.invoke();
 			Files.list(directory).filter(path -> Files.isRegularFile(path)).forEach(path -> add(path));
 			notify(sizeBefore);
 		} catch (Exception e) {
@@ -119,7 +119,7 @@ public class FileListModel extends AbstractListModel<Path> {
 	protected void copyFrom(List<Path> source) {
 		int sizeBefore = _list.size();
 		_list.clear();
-		_onClear.invoke();
+		_onCleared.invoke();
 		_list.addAll(source);
 		notify(sizeBefore);
 	}

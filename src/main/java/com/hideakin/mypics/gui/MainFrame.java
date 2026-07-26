@@ -9,6 +9,7 @@ import com.hideakin.mypics.io.FileManager;
 import static com.hideakin.mypics.Application.ABOUT;
 import static com.hideakin.mypics.Application.VERSION;
 import static com.hideakin.mypics.Application.configuration;
+import static com.hideakin.mypics.Application.fileManager;
 import static com.hideakin.mypics.Application.inProcessing;
 
 import java.awt.*;
@@ -69,14 +70,14 @@ public class MainFrame extends JFrame {
 		    public void windowOpened(WindowEvent e) {
 		    	Application.debug(3, "windowOpened");
 		    	if (_pathToOpen == null) {
-		    		_listPane.loadFrom(configuration.getDirectory(), FileList.FIRST);
+		    		_listPane.loadDirectoryFrom(configuration.getDirectory(), FileList.FIRST);
 					_menuBar.update();
 		    	} else if (Files.isDirectory(_pathToOpen)) {
-		    		_listPane.loadFrom(_pathToOpen.toAbsolutePath(), FileList.FIRST);
+		    		_listPane.loadDirectoryFrom(_pathToOpen.toAbsolutePath(), FileList.FIRST);
 					_menuBar.update();
 		    	} else if (Files.isRegularFile(_pathToOpen)) {
 		    		Path filePath = _pathToOpen.toAbsolutePath();
-		    		_listPane.loadFrom(filePath.getParent(), filePath);
+		    		_listPane.loadDirectoryFrom(filePath.getParent(), filePath);
 					_menuBar.update();
 		    	} else {
 		    		showErrorDialog(String.format("Unable to open\n%s", _pathToOpen));
@@ -144,23 +145,25 @@ public class MainFrame extends JFrame {
 			}
 		});
 
-		_listPane.onDirectoryChanged(path -> {
-			Application.debug(3, "listPane.onDirectoryChanged(%s)", path);
+		_listPane.onDirectorySelected(path -> {
+			Application.debug(3, "MainFrame.listPane.onDirectoryChanged(%s)", path);
 			loadDirectoryFrom(path);
 		});
+		_listPane.onFileCleared(() -> fileManager.clear());
 		_listPane.onFileSelected(path -> {
-			Application.debug(3, "listPane.onFileSelected(%s)", path);
+			Application.debug(3, "MainFrame.listPane.onFileSelected(%s)", path);
 			_imagePane.loadFrom(path);
 			_menuBar.enablePath(path != null);
 			_menuBar.enableImage(_imagePane.path() != null);
 		});
 
-		_imagePane.onChanged(pane -> {
-			Application.debug(3, "imagePane.onChanged(path=%s)", pane.path());
-			if (pane.path() == null) {
-				setTitle(String.format("%s", configuration.getDirectory()));
+		_imagePane.onChanged(() -> {
+			Application.debug(3, "MainFrame.imagePane.onChanged(%s)", _imagePane.path());
+			if (_imagePane.path() == null) {
+				int n = _listPane.numberOfFiles();
+				setTitle(String.format("%s [%d %s]", _listPane.directory(), n, n == 1 ? "file" : "files"));
 			} else {
-				setTitle(String.format("%s [%d%%]", pane.path(), (int)(pane.scale() * 100)));
+				setTitle(String.format("%s [%d%%]", _imagePane.path(), (int)(_imagePane.scale() * 100)));
 			}
 		});
 
@@ -186,18 +189,18 @@ public class MainFrame extends JFrame {
 	}
 
 	public void reloadDirectory() {
-		_listPane.loadFrom(configuration.getDirectory());
+		_listPane.loadDirectoryFrom(configuration.getDirectory());
 	}
 
 	public void loadDirectoryFrom(Path path) {
 		setTitle(String.format("%s", path));
-		_listPane.loadFrom(path);
+		_listPane.loadDirectoryFrom(path);
 		_menuBar.update();
 	}
 
 	public void loadDirectoryFrom(Path path, int index) {
 		setTitle(String.format("%s", path));
-		_listPane.loadFrom(path, index);
+		_listPane.loadDirectoryFrom(path, index);
 		_menuBar.update();
 	}
 
@@ -272,8 +275,7 @@ public class MainFrame extends JFrame {
 	public void loadImageFrom(Path path) {
 		inProcessing.run(() -> {
 			configuration.setDirectory(path.getParent());
-			_listPane.loadFrom(configuration.getDirectory());
-			_listPane.fileList().select(path);
+			_listPane.loadDirectoryFrom(configuration.getDirectory(), path);
 		});
 	}
 
@@ -320,8 +322,8 @@ public class MainFrame extends JFrame {
 		_menuBar.update();
 	}
 
-	public void startRenaming(BiFunction<Path, String, Path> cb) {
-		_listPane.fileList().startRenaming(cb);
+	public void startFileRenaming(BiFunction<Path, String, Path> callback) {
+		_listPane.startFileRenaming(callback);
 	}
 
 	public void setDefaultSize() {
