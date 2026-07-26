@@ -47,6 +47,10 @@ public class FileListModel extends AbstractListModel<Path> {
 		_onCleared.invoke();
 	}
 
+	public List<Path> list() {
+		return _list;
+	}
+
 	public Path get(int index) {
 		return _list.get(index);
 	}

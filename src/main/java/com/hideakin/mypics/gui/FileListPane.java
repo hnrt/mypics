@@ -49,7 +49,7 @@ public class FileListPane extends JPanel {
 		add(_scrollPane, BorderLayout.CENTER);
 		_fileList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-            	select(_fileList.getSelectedValue());
+            	invokeOnSelect(_fileList.getSelectedValue());
             }
 		});
 		_filteringTextField.getDocument().addDocumentListener(new DocumentListener() {
@@ -80,6 +80,10 @@ public class FileListPane extends JPanel {
 		return _fileList.getModel().getSize();
 	}
 
+	public List<Path> get() {
+		return _fileListModel.list();
+	}
+
 	public void loadFrom(Path directory, Object selection) {
 		inProcessing.run(() -> {
 			_directory = directory;
@@ -99,6 +103,12 @@ public class FileListPane extends JPanel {
 			}
 			_onSelected.invoke(_fileList.getSelectedValue());
 		});
+	}
+
+	public void setFiles(List<Path> paths) {
+		_fileList.clearSelection();
+		_fileListModel.clear();
+		_fileListModel.add(paths);
 	}
 
 	public void addFiles(List<Path> paths) {
@@ -148,9 +158,17 @@ public class FileListPane extends JPanel {
 		return _fileList.getSelectedValuesList();
 	}
 
-	protected void select(Path path) {
+	public void select(Path path) {
+		_fileList.setSelectedValue(path, true);
+	}
+
+	public void deselect() {
+		_fileList.clearSelection();
+	}
+
+	protected void invokeOnSelect(Path path) {
     	inProcessing.runExclusively(() -> {
-    		debug(3, "FileListPane::select(%s)", path);
+    		debug(3, "FileListPane::invokeOnSelect(%s)", path);
     		_selectedFiles.put(_directory, path);
     		_onSelected.invoke(path);
     	});
