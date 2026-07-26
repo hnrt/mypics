@@ -27,8 +27,8 @@ public class ListPane extends JSplitPane {
 		setTopComponent(_directoryListPane);
 		setBottomComponent(_fileListPane);
 		setDividerLocation(configuration.getListVerticalDividerLocation());
-		_directoryListPane.setFilteringTextFieldVisibility(configuration.getDirectoryFilterVisibility());
-		_fileListPane.setFilteringTextFieldVisibility(configuration.getFileFilterVisibility());
+		_directoryListPane.setFilteringTextFieldVisibility(configuration.getDirectoryFilteringVisibility());
+		_fileListPane.setFilteringTextFieldVisibility(configuration.getFileFilteringVisibility());
 		_fileListPane.enableThumbnail(configuration.getThumbnailEnabled());
 		addPropertyChangeListener("dividerLocation", e -> configuration.setListVerticalDividerLocation((int)e.getNewValue()));
 	}

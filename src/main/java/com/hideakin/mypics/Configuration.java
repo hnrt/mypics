@@ -53,8 +53,8 @@ public class Configuration {
 		public long moveFileInterval = 300L;
 		public int horizontalDividerLocation = DEFAULT_HORIZONTAL_DIVIDER_LOCATION;
 		public int listVerticalDividerLocation = DEFAULT_LIST_VERTICAL_DIVIDER_LOCATION;
-		public boolean directoryFilterVisibility = true;
-		public boolean fileFilterVisibility = true;
+		public boolean directoryFilteringVisibility = true;
+		public boolean fileFilteringVisibility = true;
 		public Path trashDirectory = DEFAULT_TRASH_PATH;
 		public boolean thumbnailEnabled = false;
 		public boolean thumbnailClipping = false;
@@ -77,8 +77,8 @@ public class Configuration {
 			Application.debug(3, "ConfigurationDocument: moveFileInterval=%d", moveFileInterval);
 			Application.debug(3, "ConfigurationDocument: horizontalDividerLocation=%d", horizontalDividerLocation);
 			Application.debug(3, "ConfigurationDocument: listVerticalDividerLocation=%d", listVerticalDividerLocation);
-			Application.debug(3, "ConfigurationDocument: directoryFilterDirectoryVisibility=%s", directoryFilterVisibility ? "true" : "false");
-			Application.debug(3, "ConfigurationDocument: fileFilterDirectoryVisibility=%s", fileFilterVisibility ? "true" : "false");
+			Application.debug(3, "ConfigurationDocument: directoryFilteringDirectoryVisibility=%s", directoryFilteringVisibility ? "true" : "false");
+			Application.debug(3, "ConfigurationDocument: fileFilteringDirectoryVisibility=%s", fileFilteringVisibility ? "true" : "false");
 			Application.debug(3, "ConfigurationDocument: trashDirectory=%s", trashDirectory);
 			Application.debug(3, "ConfigurationDocument: thumbnailEnabled=%s", thumbnailEnabled ? "true" : "false");
 			Application.debug(3, "ConfigurationDocument: thumbnailClipping=%s", thumbnailClipping ? "true" : "false");
@@ -276,20 +276,20 @@ public class Configuration {
 		_document.listVerticalDividerLocation = value;
 	}
 
-	public boolean getDirectoryFilterVisibility() {
-		return _document.directoryFilterVisibility;
+	public boolean getDirectoryFilteringVisibility() {
+		return _document.directoryFilteringVisibility;
 	}
 
-	public void setDirectoryFilterVisibility(boolean value) {
-		_document.directoryFilterVisibility = value;
+	public void setDirectoryFilteringVisibility(boolean value) {
+		_document.directoryFilteringVisibility = value;
 	}
 
-	public boolean getFileFilterVisibility() {
-		return _document.fileFilterVisibility;
+	public boolean getFileFilteringVisibility() {
+		return _document.fileFilteringVisibility;
 	}
 
-	public void setFileFilterVisibility(boolean value) {
-		_document.fileFilterVisibility = value;
+	public void setFileFilteringVisibility(boolean value) {
+		_document.fileFilteringVisibility = value;
 	}
 
 	public Path getTrashDirectory() {
