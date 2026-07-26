@@ -106,8 +106,15 @@ public class SelectablePathTree extends JTree {
 	public void loadDirectory(Path directory) {
 		if (_model instanceof DirectorySelectionTreeModel model) {
 			model.loadDirectory(directory);
+			model.reload();
 			SelectablePathTreeNode node = model.find(directory);
-			_model.reload(node);
+			while (node.getChildCount() == 0) {
+				if ((directory = directory.getParent()) == null) {
+					break;
+				}
+				node = model.find(directory);
+			}
+			model.reload(node);
 			expandPath(new TreePath(node.getPath()));
 		} else {
 			throw new RuntimeException("SelectablePathTree::loadDirectory: Bad model.");
