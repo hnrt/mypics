@@ -34,7 +34,7 @@ public class ImagePane extends JScrollPane {
 		super();
         _imageLabel = new JLabel();
         _imageLabel.setHorizontalAlignment(JLabel.CENTER);
-		this.setViewportView(_imageLabel);
+		setViewportView(_imageLabel);
         addMouseWheelListener(e -> {
             if (_image == null) return;
             int notches = e.getWheelRotation();

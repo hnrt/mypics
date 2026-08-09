@@ -1,5 +1,6 @@
 package com.hideakin.mypics.gui;
 
+import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.nio.file.Files;
@@ -7,7 +8,9 @@ import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -26,7 +29,7 @@ import com.hideakin.mypics.util.function.ConsumerList;
 import static com.hideakin.mypics.Application.debug;
 import static com.hideakin.mypics.Application.mainFrame;
 
-public class DirectorySelectionTreeImagePane extends JSplitPane {
+public class DirectorySelectionTreeImagePane extends JPanel {
 
 	private static final long serialVersionUID = 6447276821314247832L;
 
@@ -34,6 +37,8 @@ public class DirectorySelectionTreeImagePane extends JSplitPane {
 		return new DirectorySelectionTreeImagePane();
 	}
 
+	protected final JLabel _title = new JLabel("?");
+	protected final JSplitPane _splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	protected final SelectablePathTree _directoryTree = new SelectablePathTree(new DirectorySelectionTreeModel(), true);
 	protected final JScrollPane _scrollPane = new JScrollPane(_directoryTree);
 	protected final MultiImagePane _multiImagePane = MultiImagePane.create();
@@ -46,10 +51,12 @@ public class DirectorySelectionTreeImagePane extends JSplitPane {
 	protected final ConsumerList<Path> _onRemoved = new ConsumerList<>();
 
 	protected DirectorySelectionTreeImagePane() {
-		super(JSplitPane.HORIZONTAL_SPLIT);
-		setLeftComponent(_scrollPane);
-		setRightComponent(_multiImagePane);
-		setDividerLocation(400);
+		super(new BorderLayout());
+		add(_title, BorderLayout.NORTH);
+		add(_splitPane, BorderLayout.CENTER);
+		_splitPane.setLeftComponent(_scrollPane);
+		_splitPane.setRightComponent(_multiImagePane);
+		_splitPane.setDividerLocation(400);
 		_popup.add(_createMenuItem);
 		_popup.add(_renameMenuItem);
 		_popup.add(_removeMenuItem);
@@ -167,6 +174,22 @@ public class DirectorySelectionTreeImagePane extends JSplitPane {
 			e.printStackTrace();
 			_multiImagePane.clear();
 		}
+	}
+
+	public void setText(String format, Object... params) {
+		_title.setText(String.format(format, params));
+	}
+
+	public int getDividerLocation() {
+		return _splitPane.getDividerLocation();
+	}
+
+	public void setDividerLocation(int location) {
+		_splitPane.setDividerLocation(location);
+	}
+
+	public void select(Path path) {
+		_directoryTree.select(path);
 	}
 
 }

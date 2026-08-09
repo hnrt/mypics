@@ -62,7 +62,9 @@ public class SelectablePathTree extends JTree {
 		    }
 		});
 		addTreeSelectionListener(e -> {
-			if (_model instanceof DirectorySelectionTreeModel) {
+			if (getSelectionCount() == 0) {
+				_onSelected.invoke(null);
+			} else if (_model instanceof DirectorySelectionTreeModel) {
 			    TreePath path = e.getPath();
 			    if (path.getLastPathComponent() instanceof SelectablePathTreeNode sptn) {
 				    debug(3, "SelectablePathTree::Selection: %s", sptn.path());
@@ -178,9 +180,13 @@ public class SelectablePathTree extends JTree {
 
 	public void select(Path path) {
 		if (_root instanceof SelectablePathTreeNode root) {
-			SelectablePathTreeNode found = root.find(path);
-			if (found != null) {
-				setSelectionPath(new TreePath(found.getPath()));
+			if (path != null) {
+				SelectablePathTreeNode found = root.find(path);
+				if (found != null) {
+					setSelectionPath(new TreePath(found.getPath()));
+				}
+			} else {
+				clearSelection();
 			}
 		} else {
 			throw new RuntimeException("SelectablePathTree::select: Bad model.");

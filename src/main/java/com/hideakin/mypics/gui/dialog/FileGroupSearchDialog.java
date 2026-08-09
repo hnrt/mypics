@@ -25,16 +25,16 @@ import javax.swing.SwingUtilities;
 import com.hideakin.mypics.gui.DirectorySelectionTreeImagePane;
 import com.hideakin.mypics.gui.FileListImagePane;
 import com.hideakin.mypics.gui.component.SelectablePathTree;
+import com.hideakin.mypics.gui.component.FileGroupSearchTree;
 import com.hideakin.mypics.gui.model.DirectorySelectionTreeModel;
 import com.hideakin.mypics.gui.model.FileGroupSearchTreeModel;
+import com.hideakin.mypics.gui.model.FileGroupTreeNode;
 import com.hideakin.mypics.gui.model.MatchedFileTreeNode;
 import com.hideakin.mypics.gui.model.SelectablePathTreeNode;
 import com.hideakin.mypics.gui.model.TargetDirectoryTreeNode;
 import com.hideakin.mypics.gui.util.WorkInProgress;
 import com.hideakin.mypics.model.PathNode;
 import com.hideakin.mypics.model.SelectablePath;
-
-import static com.hideakin.mypics.Application.inProcessing;
 
 public class FileGroupSearchDialog extends ModalDialog {
 
@@ -62,7 +62,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 	private final JScrollPane _destinationScroll = new JScrollPane(_destinationTree);
 	private final JPanel _resultPane = new JPanel(new BorderLayout());
 	private final JLabel _resultLabel = new JLabel("File groups");
-	private final SelectablePathTree _resultTree = new SelectablePathTree(new FileGroupSearchTreeModel());
+	private final FileGroupSearchTree _resultTree = new FileGroupSearchTree();
 	private final JScrollPane _resultScroll = new JScrollPane(_resultTree);
 	private final FileListImagePane _matchedPane = FileListImagePane.create();
 	private final FileListImagePane _targetPane = FileListImagePane.create();
@@ -71,8 +71,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 	private final Map<String, PathNode> _destinations = new HashMap<>();
 	private Pattern _pattern;
 	private Thread _background;
-	private TargetDirectoryTreeNode _targetDirectoryNode;
-	private MatchedFileTreeNode _currentMatchedFileTreeNode = null;
+	private String _currentFileGroup = null;
 
 	private FileGroupSearchDialog() {
 		super("Select source and destination directories and click Test to begin search.");
@@ -100,6 +99,8 @@ public class FileGroupSearchDialog extends ModalDialog {
 		_destinationPane.add(_destinationScroll, BorderLayout.CENTER);
 		_resultPane.add(_resultLabel, BorderLayout.NORTH);
 		_resultPane.add(_resultScroll, BorderLayout.CENTER);
+		_matchedPane.setText("Matched files");
+		_targetPane.setText("Target directory");
 		_buttons.searchButton.setVisible(true);
 		_buttons.searchButton.setEnabled(false);
 		_buttons.applyButton.setEnabled(false);
@@ -127,40 +128,49 @@ public class FileGroupSearchDialog extends ModalDialog {
 				if (sp.isRegularFile()) {
 					if (spNode.getParent() instanceof MatchedFileTreeNode mfNode) {
 						debug(3, "FileGroupSearchDialog.resultTree.onSelected(%s) RegularFile", sp.path());
-						int loc = _matchedPane.getDividerLocation();
-						if (_currentMatchedFileTreeNode != mfNode) {
-							_currentMatchedFileTreeNode = mfNode;
-							_matchedPane.setFiles(mfNode.list());
+						FileGroupTreeNode fgNode = (FileGroupTreeNode)mfNode.getParent();
+						if (!fgNode.key().equals(_currentFileGroup)) {
+							switchTo(fgNode);
 						}
+						int loc = _matchedPane.getDividerLocation();
+						_matchedPane.setText("Matched file: %s", sp.path());
 						_matchedPane.select(sp.path());
 						SwingUtilities.invokeLater(() -> _matchedPane.setDividerLocation(loc));
 					}
 				} else if (sp.isDirectory()) {
-					debug(3, "FileGroupSearchDialog.resultTree.onSelected(%s) Directory", sp.path());
-					if (_rightPane.getBottomComponent() == _targetSelectionPane) {
-						_rightPane.setBottomComponent(_targetPane);
+					if (spNode.getParent() instanceof TargetDirectoryTreeNode tdNode) {
+						debug(3, "FileGroupSearchDialog.resultTree.onSelected(%s) Directory", sp.path());
+						FileGroupTreeNode fgNode = (FileGroupTreeNode)tdNode.getParent();
+						if (!fgNode.key().equals(_currentFileGroup)) {
+							switchTo(fgNode);
+						}
+						if (_rightPane.getBottomComponent() != _targetPane) {
+							_rightPane.setBottomComponent(_targetPane);
+						}
+						int loc = _targetPane.getDividerLocation();
+						_targetPane.setText("Target directory: %s", sp.path());
+						_targetPane.loadFrom(sp.path());
+						SwingUtilities.invokeLater(() -> _targetPane.setDividerLocation(loc));
 					}
-					int loc = _targetPane.getDividerLocation();
-					_targetPane.loadFrom(sp.path());
-					SwingUtilities.invokeLater(() -> _targetPane.setDividerLocation(loc));
+				}
+			} else if (x instanceof FileGroupTreeNode fgNode) {
+				debug(3, "FileGroupSearchDialog.resultTree.onSelected FileGroupTreeNode");
+				if (!fgNode.key().equals(_currentFileGroup)) {
+					switchTo(fgNode);
 				}
 			} else if (x instanceof MatchedFileTreeNode mfNode) {
 				debug(3, "FileGroupSearchDialog.resultTree.onSelected MatchedFileTreeNode");
-				if (_currentMatchedFileTreeNode != mfNode) {
-					_currentMatchedFileTreeNode = mfNode;
-					int loc = _matchedPane.getDividerLocation();
-					_matchedPane.setFiles(mfNode.list());
-					SwingUtilities.invokeLater(() -> _matchedPane.setDividerLocation(loc));
+				FileGroupTreeNode fgNode = (FileGroupTreeNode)mfNode.getParent();
+				if (!fgNode.key().equals(_currentFileGroup)) {
+					switchTo(fgNode);
 				}
 			} else if (x instanceof TargetDirectoryTreeNode tdNode) {
 				debug(3, "FileGroupSearchDialog.resultTree.onSelected TargetDirectoryTreeNode");
-				_targetDirectoryNode = tdNode;
-				_rightPane.setBottomComponent(_targetSelectionPane);
-				for (Path path : _targetSelectionPane.selectedPaths()) {
-					_targetSelectionPane.setSelected(path, false, true);
-				}
-				for (Path path : _targetDirectoryNode.list()) {
-					_targetSelectionPane.setSelected(path,  true,  false);
+				FileGroupTreeNode fgNode = (FileGroupTreeNode)tdNode.getParent();
+				if (!fgNode.key().equals(_currentFileGroup)) {
+					switchTo(fgNode);
+				} else if (_rightPane.getBottomComponent() == _targetPane) {
+					switchTo(tdNode);
 				}
 			} else {
 				debug(3, "FileGroupSearchDialog.resultTree.onSelected something else");
@@ -169,35 +179,50 @@ public class FileGroupSearchDialog extends ModalDialog {
 			SwingUtilities.invokeLater(() -> _rightPane.setDividerLocation(locRight));
 		});
 		_targetSelectionPane.onChanged(x -> {
-			_targetDirectoryNode.replaceWith(_targetSelectionPane.selectedPaths());
-			_resultTree.expandNode(_targetDirectoryNode);
+			TargetDirectoryTreeNode node = _resultTree.model().targetDirectoryNode(_currentFileGroup);
+			node.replaceWith(_targetSelectionPane.selectedPaths());
+			_resultTree.expandNode(node);
 		});
 		_targetSelectionPane.onSelected(x -> {
-			if (x instanceof SelectablePathTreeNode spNode) {
+			if (x == null) {
+				debug(3, "FileGroupSearchDialog.targetSelectionPane.onSelected(null)");
+				_targetSelectionPane.loadImagesFrom(null);
+			} else if (x instanceof SelectablePathTreeNode spNode) {
 				SelectablePath sp = spNode.selectablePath();
 				if (sp.isDirectory()) {
-					debug(3, "FileGroupSearchDialog.targetPane.onSelected(%s)", sp.path());
+					debug(3, "FileGroupSearchDialog.targetSelectionPane.onSelected(%s)", sp.path());
 					_targetSelectionPane.loadImagesFrom(sp.path());
 				}
+			} else {
+				debug(0, "FileGroupSearchDialog.targetSelectionPane.onSelected(%s)", x.getClass().getName());
 			}
 		});
 		_targetSelectionPane.onCreated(x -> {
-			_targetDirectoryNode.replaceWith(_targetSelectionPane.selectedPaths());
-			_resultTree.expandNode(_targetDirectoryNode);
+			TargetDirectoryTreeNode node = _resultTree.model().targetDirectoryNode(_currentFileGroup);
+			node.replaceWith(_targetSelectionPane.selectedPaths());
+			_resultTree.expandNode(node);
 		});
 		_targetSelectionPane.onRenamed((x, y) -> {
-			_targetDirectoryNode.replaceWith(_targetSelectionPane.selectedPaths());
-			_resultTree.expandNode(_targetDirectoryNode);
+			TargetDirectoryTreeNode node = _resultTree.model().targetDirectoryNode(_currentFileGroup);
+			node.replaceWith(_targetSelectionPane.selectedPaths());
+			_resultTree.expandNode(node);
 		});
 		_targetSelectionPane.onRemoved(x -> {
-			_targetDirectoryNode.replaceWith(_targetSelectionPane.selectedPaths());
-			_resultTree.expandNode(_targetDirectoryNode);
+			TargetDirectoryTreeNode node = _resultTree.model().targetDirectoryNode(_currentFileGroup);
+			node.replaceWith(_targetSelectionPane.selectedPaths());
+			_resultTree.expandNode(node);
 		});
 		_matchedPane.onSelected(path -> {
 			debug(3, "FileGroupSearchDialog.matchedPane.onSelected(%s)", path);
 			int loc = _matchedPane.getDividerLocation();
+			if (path != null) {
+				_matchedPane.setText("Matched file: %s", path);
+			} else {
+				_matchedPane.setText("Matched files");
+			}
 			_matchedPane.select(path);
 			SwingUtilities.invokeLater(() -> _matchedPane.setDividerLocation(loc));
+			_resultTree.select(_currentFileGroup, path);
 		});
 		_targetPane.onSelected(path -> {
 			debug(3, "FileGroupSearchDialog.targetPane.onSelected(%s)", path);
@@ -222,8 +247,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 		}
 		int loc = _basePane.getDividerLocation();
 		_resultLabel.setText("File groups: Searching...");
-		_resultTree.root().removeAllChildren();
-		_resultTree.model().reload();
+		_resultTree.clear();
 		_buttons.searchButton.setEnabled(false);
 		_buttons.applyButton.setEnabled(false);
 		SwingUtilities.invokeLater(() -> _basePane.setDividerLocation(loc));
@@ -241,7 +265,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 	}
 
 	private void doSearch() {
-		_currentMatchedFileTreeNode = null;
+		_currentFileGroup = null;
 		_sources.clear();
 		_destinations.clear();
 		for (Path directory : _sourceTree.selectedPaths()) {
@@ -284,11 +308,10 @@ public class FileGroupSearchDialog extends ModalDialog {
 				e.printStackTrace();
 			}
 		}
-		FileGroupSearchTreeModel model = (FileGroupSearchTreeModel)_resultTree.model();
+		FileGroupSearchTreeModel model = _resultTree.model();
 		for (String key : _sources.keySet()) {
 			PathNode s = _sources.get(key);
 			PathNode d = _destinations.get(key);
-			model.addKey(key);
 			model.addMatchedFiles(key, s);
 			if (d != null) {
 				model.addTargetDirectories(key, d);
@@ -299,15 +322,14 @@ public class FileGroupSearchDialog extends ModalDialog {
 			_resultLabel.setText(String.format("File groups: %d", keys.length));
 			_buttons.applyButton.setEnabled(true);
 			_buttons.searchButton.setEnabled(true);
-			model.reloadRoot();
+			model.reload(model.root());
 		});
 		for (String key : keys) {
 			invokeLater(() -> {
 				_resultTree.expandNode(model.keyNode(key));
 			});
-			TargetDirectoryTreeNode node = model.targetDirectoryNode(key);
 			invokeLater(() -> {
-				_resultTree.expandNode(node);
+				_resultTree.expandNode(model.targetDirectoryNode(key));
 			});
 		}
 		invokeLater(() -> {
@@ -316,7 +338,7 @@ public class FileGroupSearchDialog extends ModalDialog {
 	}
 
 	private void doApply() {
-		FileGroupSearchTreeModel model = (FileGroupSearchTreeModel)_resultTree.model();
+		FileGroupSearchTreeModel model = _resultTree.model();
 		for (String key : model.keys()) {
 			List<Path> from = model.from(key);
 			List<Path> to = model.to(key);
@@ -335,10 +357,37 @@ public class FileGroupSearchDialog extends ModalDialog {
 			_buttons.applyButton.setEnabled(keys.length > 0);
 		})) return;
 		for (String key : keys) {
-			TargetDirectoryTreeNode node = model.targetDirectoryNode(key);
 			invokeLater(() -> {
-				_resultTree.expandNode(node);
+				_resultTree.expandNode(model.keyNode(key));
 			});
+			invokeLater(() -> {
+				_resultTree.expandNode(model.targetDirectoryNode(key));
+			});
+		}
+	}
+
+	private void switchTo(FileGroupTreeNode fgNode) {
+		_currentFileGroup = fgNode.key();
+		switchTo(fgNode.matchedFileNode());
+		switchTo(fgNode.targetDirectoryNode());
+	}
+
+	private void switchTo(MatchedFileTreeNode mfNode) {
+		int loc = _matchedPane.getDividerLocation();
+		_matchedPane.setText("Matched files");
+		_matchedPane.setFiles(mfNode.list());
+		SwingUtilities.invokeLater(() -> _matchedPane.setDividerLocation(loc));
+	}
+
+	private void switchTo(TargetDirectoryTreeNode tdNode) {
+		_rightPane.setBottomComponent(_targetSelectionPane);
+		_targetSelectionPane.setText("Target directory selection");
+		_targetSelectionPane.select(null);
+		for (Path path : _targetSelectionPane.selectedPaths()) {
+			_targetSelectionPane.setSelected(path, false, true);
+		}
+		for (Path path : tdNode.list()) {
+			_targetSelectionPane.setSelected(path,  true,  false);
 		}
 	}
 

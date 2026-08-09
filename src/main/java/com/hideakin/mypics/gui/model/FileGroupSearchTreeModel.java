@@ -1,7 +1,6 @@
 package com.hideakin.mypics.gui.model;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +15,7 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 	private static final long serialVersionUID = 2725084169062715262L;
 
 	private final DefaultMutableTreeNode _root;
-	private final Map<String, DefaultMutableTreeNode> _keyNodes = new HashMap<>(1024);
+	private final Map<String, FileGroupTreeNode> _keyNodes = new HashMap<>(1024);
 
 	public FileGroupSearchTreeModel() {
 		super(new DefaultMutableTreeNode("ROOT"));
@@ -27,7 +26,7 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 		return _root;
 	}
 
-	public DefaultMutableTreeNode keyNode(String key) {
+	public FileGroupTreeNode keyNode(String key) {
 		int n = _root.getChildCount();
 		if (n == 0) {
 			_keyNodes.clear();
@@ -37,155 +36,102 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 	}
 
 	public MatchedFileTreeNode matchedFileNode(String key) {
-		int n = _root.getChildCount();
-		if (n == 0) {
-			_keyNodes.clear();
-			return null;
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
-		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
-		if (keyNode != null) {
-			return (MatchedFileTreeNode)keyNode.getChildAt(0);
-		} else {
-			return null;
-		}
+		return node.matchedFileNode();
 	}
 
 	public TargetDirectoryTreeNode targetDirectoryNode(String key) {
-		int n = _root.getChildCount();
-		if (n == 0) {
-			_keyNodes.clear();
-			return null;
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
-		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
-		if (keyNode != null) {
-			return (TargetDirectoryTreeNode)keyNode.getChildAt(1);
-		} else {
-			return null;
-		}
+		return node.targetDirectoryNode();
 	}
 
 	public List<Path> from(String key) {
-		List<Path> list = new ArrayList<>();
-		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
-		if (keyNode != null) {
-			if (keyNode.getChildAt(0) instanceof MatchedFileTreeNode mfNode) {
-				int n = mfNode.getChildCount();
-				for (int i = 0; i < n; i++) {
-					if (mfNode.getChildAt(i) instanceof SelectablePathTreeNode spNode) {
-						if (spNode.selectablePath().selected()) {
-							list.add(spNode.selectablePath().path());
-						}
-					} else {
-						throw new RuntimeException("FileGroupTreeModel::from: Corrupted.");
-					}
-				}
-			} else {
-				throw new RuntimeException("FileGroupTreeModel::from: Corrupted.");
-			}
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
-		return list;
+		return node.matchedFileNode().list();
 	}
 
 	public List<Path> to(String key) {
-		List<Path> list = new ArrayList<>();
-		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
-		if (keyNode != null) {
-			if (keyNode.getChildAt(1) instanceof TargetDirectoryTreeNode tdNode) {
-				int n = tdNode.getChildCount();
-				for (int i = 0; i < n; i++) {
-					if (tdNode.getChildAt(i) instanceof SelectablePathTreeNode spNode) {
-						if (spNode.selectablePath().selected()) {
-							list.add(spNode.selectablePath().path());
-						}
-					} else {
-						throw new RuntimeException("FileGroupTreeModel::to: Corrupted.");
-					}
-				}
-			} else {
-				throw new RuntimeException("FileGroupTreeModel::to: Corrupted.");
-			}
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
-		return list;
+		return node.targetDirectoryNode().list();
 	}
 
 	public void addKey(String key) {
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			add(new FileGroupTreeNode(key));
+		}
+	}
+
+	private FileGroupTreeNode add(FileGroupTreeNode node) {
+		String key = node.key();
+		_keyNodes.put(key, node);
 		int n = _root.getChildCount();
-		if (n == 0) {
-			_keyNodes.clear();
-		}
-		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
-		if (keyNode != null) {
-			return;
-		}
-		keyNode = new DefaultMutableTreeNode(key);
-		keyNode.add(new MatchedFileTreeNode());
-		keyNode.add(new TargetDirectoryTreeNode());
-		_keyNodes.put(key, keyNode);
 		for (int i = 0; i < n; i++) {
-			DefaultMutableTreeNode next = (DefaultMutableTreeNode)_root.getChildAt(i);
-			String nextKey = (String)next.getUserObject();
-			if (nextKey.compareTo(key) > 0) {
-				_root.insert(keyNode, i);
-				return;
+			FileGroupTreeNode next = (FileGroupTreeNode)_root.getChildAt(i);
+			int d = next.key().compareTo(key); 
+			if (d > 0) {
+				_root.insert(node, i);
+				return node;
+			} else if (d == 0) {
+				_root.remove(i);
+				_root.insert(node, i);
+				return node;
 			}
 		}
-		_root.add(keyNode);
+		_root.add(node);
+		return node;
 	}
 
 	public void removeKey(String key) {
-		int n = _root.getChildCount();
-		if (n == 0) {
-			_keyNodes.clear();
-			return;
+		FileGroupTreeNode node = keyNode(key);
+		if (node != null) {
+			_keyNodes.remove(key);
+			_root.remove(node);
 		}
-		DefaultMutableTreeNode keyNode = _keyNodes.get(key);
-		if (keyNode == null) {
-			return;
-		}
-		_keyNodes.remove(key);
-		_root.remove(keyNode);
 	}
 
 	public void addMatchedFile(String key, Path path) {
-		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
-		if (keyNode == null) {
-			throw new RuntimeException("FileGroupTreeModel::addMatchedFile: No such key: " + key);
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
-		if (keyNode.getChildAt(0) instanceof MatchedFileTreeNode fNode) {
-			fNode.add(path, true);
-		} else {
-			throw new RuntimeException("FileGroupTreeModel::addMatchedFile: Corrupted.");
-		}
+		node.matchedFileNode().add(path, true);
 	}
 
 	public void addMatchedFiles(String key, PathNode ff) {
-		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
-		if (keyNode == null) {
-			throw new RuntimeException("FileGroupTreeModel::addMatchedFile: No such key: " + key);
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
-		if (keyNode.getChildAt(0) instanceof MatchedFileTreeNode fNode) {
-			fNode.add(ff, true);
-		} else {
-			throw new RuntimeException("FileGroupTreeModel::addMatchedFile: Corrupted.");
-		}
+		node.matchedFileNode().add(ff, true);
 	}
 
 	public void addTargetDirectory(String key, Path path) {
-		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
-		if (keyNode.getChildAt(1) instanceof TargetDirectoryTreeNode tNode) {
-			tNode.add(path, false);
-		} else {
-			throw new RuntimeException("FileGroupTreeModel::addMatchedFile: Corrupted.");
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
+		node.targetDirectoryNode().add(path, false);
 	}
 
 	public void addTargetDirectories(String key, PathNode dd) {
-		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
-		if (keyNode.getChildAt(1) instanceof TargetDirectoryTreeNode tNode) {
-			tNode.add(dd, false);
-		} else {
-			throw new RuntimeException("FileGroupTreeModel::addMatchedFile: Corrupted.");
+		FileGroupTreeNode node = keyNode(key);
+		if (node == null) {
+			node = add(new FileGroupTreeNode(key));
 		}
+		node.targetDirectoryNode().add(dd, false);
 	}
 
 	public void reloadRoot() {
@@ -193,9 +139,9 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 	}
 
 	public void reloadKey(String key) {
-		DefaultMutableTreeNode keyNode =_keyNodes.get(key);
-		if (keyNode != null) {
-			reload(keyNode);
+		FileGroupTreeNode node = keyNode(key);
+		if (node != null) {
+			reload(node);
 		}
 	}
 
@@ -203,8 +149,8 @@ public class FileGroupSearchTreeModel extends DefaultTreeModel {
 		int n = _root.getChildCount();
 		String[] kk = new String[n];
 		for (int i = 0; i < n; i++) {
-			DefaultMutableTreeNode keyNode = (DefaultMutableTreeNode)_root.getChildAt(i);
-			kk[i] = (String)keyNode.getUserObject();
+			FileGroupTreeNode keyNode = (FileGroupTreeNode)_root.getChildAt(i);
+			kk[i] = keyNode.key();
 		}
 		return kk;
 	}
